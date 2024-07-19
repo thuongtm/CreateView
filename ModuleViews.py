@@ -336,7 +336,7 @@ class Views:
     def get_calculation_list_all(self):
         return self.whereSelected + self.havingSelected
 
-    def get_name_calculation_by_level(self, level, status):
+    def get_name_calculation_by_level(self, level, status, calcur):
         listName = []
         if status:
             for item in self.havingSelected:
@@ -347,6 +347,8 @@ class Views:
                 if item.level == level or item.level == (level - 1):
                     listName.append(item.get_sql())
         if len(listName) > 0:
+            if calcur in listName:
+                listName.remove(calcur)
             return [""] + listName
         else:
             return listName
@@ -375,18 +377,12 @@ class Views:
         isCheck = False
         if cal.columns.isAgg:
             for item in self.havingSelected:
-                if (
-                    item.columns.columnName == cal.columns.columnName
-                    and item.calNo == cal.calNo
-                ):
+                if item.get_sql() == cal.get_sql():
                     isCheck = True
                     break
         else:
             for item in self.whereSelected:
-                if (
-                    item.columns.columnName == cal.columns.columnName
-                    and item.calNo == cal.calNo
-                ):
+                if item.get_sql() == cal.get_sql():
                     isCheck = True
                     break
         return isCheck

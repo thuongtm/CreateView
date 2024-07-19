@@ -1,0 +1,33 @@
+git add mainwindow.py
+git add MainWindow.ui
+git add images.qrc
+git add frmLogin.ui
+git add frmCreateView.ui
+git add frmRelease.ui
+git add frmRun.ui
+git add frmSearch.ui
+git add Connect.py
+git add config.xml
+git add Sentences.py
+git add ModuleDataBasics.py
+git add ModuleCalculations.py
+git add ModuleColumns.py
+git add ModuleDataSets.py
+git add ModuleFunctions.py
+git add ModuleUsers.py
+git add ModuleViews.py
+git add ModuleSorts.py
+git add ModuleCenterContents.py
+git add ModuleWriteLogs.py
+git add TableViewModel.py
+git add frmViewData.ui
+git add ModuleViewAction.py
+git add ModuleSecurity.py
+git add frmCreateUser.ui
+git add frmChangePassword.ui
+
+git init
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/thuongtm/CreateView.git
+git push -u origin main

@@ -7,7 +7,9 @@ class Sentences:
 
     # sql check login of user and password
     def sql_login_check(self, user):
-        sql = """select * from TUSERS where USERS = '{0}'""".format(user)
+        sql = """select * from TUSERS where USERS = '{0}' and status = 1""".format(
+            user
+        )
         return sql
 
     # sql get all dataset in database

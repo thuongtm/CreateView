@@ -20,6 +20,19 @@ class Users:
         self.isLogin = False
         self.writeLog = ModuleWriteLogs.WriteLogs(connect)
         self.sercurity = ModuleSecurity.Security()
+        self.status = True
+
+    def set_status(self, index):
+        if index == 1:
+            self.status = True
+        else:
+            self.status = False
+
+    def get_status(self):
+        if self.status:
+            return 1
+        else:
+            return 0
 
     def set_user(self, user):
         try:
@@ -32,6 +45,7 @@ class Users:
             self.fullname = user.fullname
             self.permission = user.permissions
             self.phone = user.phonenumber
+            self.set_status(user.status)
         except:
             raise
 

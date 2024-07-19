@@ -69,7 +69,17 @@ class Calculations:
             return "False"
 
     def get_key_cal(self):
-        return self.calNames.replace("{column}", self.columns.columnName)
+        if self.columns.typeColumn in self.sentence.type_date():
+            sql = self.calNames.replace(
+                "{column}", "Trunc(" + self.columns.columnName + ")"
+            )
+        else:
+            sql = self.calNames.replace("{column}", self.columns.columnName)
+        if self.numbers >= 2:
+            sql = sql.replace("{value1}", str(self.value1))
+        if self.numbers == 3:
+            sql = sql.replace("{value2}", str(self.value2))
+        return sql
 
     def set_ismany(self, status):
         if status == "True":
@@ -91,6 +101,9 @@ class Calculations:
 
     def get_name_show_with_column(self, colName):
         return self.calShow.replace("{column}", colName)
+
+    def get_name_show(self):
+        return self.calShow.replace("{column}", self.columns.columnName)
 
     def set_column(self, column):
         self.columns = column

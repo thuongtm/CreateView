@@ -1082,9 +1082,7 @@ class MainWindow(QMainWindow):
                 rItem0.setIcon(icon)
                 rItem1 = QTableWidgetItem(rowItem.columns.columnName)
                 rItem2 = QTableWidgetItem(
-                    rowItem.get_name_show_with_column(
-                        rowItem.columns.columnName
-                    )
+                    rowItem.get_sql()
                 )
                 rItem3 = QTableWidgetItem(str(rowItem.valueBasic1))
                 rItem4 = QTableWidgetItem(str(rowItem.valueBasic2))
@@ -1195,7 +1193,7 @@ class MainWindow(QMainWindow):
         if self.calCur.isCal:
             level = self.view_create_ui.spbFilterRelLevel.value()
             listWith = self.viewCurrent.get_name_calculation_by_level(
-                level, self.calCur.isAgg
+                level, self.calCur.isAgg, self.calCur.get_sql()
             )
             if len(listWith) > 0:
                 self.view_create_ui.cbbFilterRelaWith.addItems(listWith)
@@ -1253,10 +1251,11 @@ class MainWindow(QMainWindow):
         calNameShow = self.view_create_ui.tbwFilter.item(rowIndex, 2).text()
         isAgg = self.view_create_ui.tbwFilter.item(rowIndex, 8).text()
         self.view_create_ui.cbbFilterColumn.setCurrentText(colName)
-        self.view_create_ui.cbbFilterCal.setCurrentText(calNameShow)
-        self.calCur = self.viewCurrent.get_calculation_by_key(
+        calUpdate = self.viewCurrent.get_calculation_by_key(
             colName, calNameShow, isAgg
         )
+        self.view_create_ui.cbbFilterCal.setCurrentText(calUpdate.get_name_show())
+        self.calCur = calUpdate
         self.calCur.set_update(True)
         self.enable_filter_cal()
 
