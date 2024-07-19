@@ -28,6 +28,8 @@ from ui_frmRun import Ui_frmRunView
 from ui_dialogSearch import Ui_DialogSearch
 from ui_frmLogin import Ui_frmLogin
 from ui_frmViewData import Ui_frmViewData
+from ui_frmChangePassword import Ui_ChangePassword
+from ui_frmCreateUser import Ui_CreateUser
 
 # import Module
 import Connect, ModuleUsers, ModuleDataBasics, ModuleViews, ModuleColumns
@@ -60,6 +62,10 @@ class MainWindow(QMainWindow):
         self.ui.actionRun_View.triggered.connect(self.menu_view_run)
         self.ui.actionHome.triggered.connect(self.menu_view_home)
         self.ui.actionSearch.triggered.connect(self.menu_view_search)
+        self.ui.actionChange_Password.triggered.connect(
+            self.menu_change_password
+        )
+        self.ui.actionCreate_User.triggered.connect(self.menu_user_create)
 
         # define variable global
         try:
@@ -80,6 +86,10 @@ class MainWindow(QMainWindow):
         self.ui.actionCreate_View.setEnabled(index != 1)
         self.ui.actionRun_View.setEnabled(index != 2)
         self.ui.actionRelease_View.setEnabled(index != 3)
+        self.ui.actionChange_Password.setEnabled(index != 4)
+        self.ui.actionCreate_User.setEnabled(
+            self.users.is_admin() and index != 5
+        )
 
     def show_message(self, type, title, content, moreinfo=None):
         messageBox = QMessageBox()
@@ -1081,9 +1091,7 @@ class MainWindow(QMainWindow):
                 )
                 rItem0.setIcon(icon)
                 rItem1 = QTableWidgetItem(rowItem.columns.columnName)
-                rItem2 = QTableWidgetItem(
-                    rowItem.get_sql()
-                )
+                rItem2 = QTableWidgetItem(rowItem.get_sql())
                 rItem3 = QTableWidgetItem(str(rowItem.valueBasic1))
                 rItem4 = QTableWidgetItem(str(rowItem.valueBasic2))
                 rItem5 = QTableWidgetItem(rowItem.relation)
@@ -1254,7 +1262,9 @@ class MainWindow(QMainWindow):
         calUpdate = self.viewCurrent.get_calculation_by_key(
             colName, calNameShow, isAgg
         )
-        self.view_create_ui.cbbFilterCal.setCurrentText(calUpdate.get_name_show())
+        self.view_create_ui.cbbFilterCal.setCurrentText(
+            calUpdate.get_name_show()
+        )
         self.calCur = calUpdate
         self.calCur.set_update(True)
         self.enable_filter_cal()
@@ -1564,25 +1574,33 @@ class MainWindow(QMainWindow):
         self.view_run_widgets = QWidget()
         self.view_run_ui.setupUi(self.view_run_widgets)
         self.ui.scrollArea.setWidget(self.view_run_widgets)
-        self.dataBasic.initdata_run()
-        self.enable_menu_by_index(2)
+        try:
+            self.dataBasic.initdata_run()
+            self.enable_menu_by_index(2)
 
-        # load data to cbb
-        self.loaddata_cbb_run()
-        self.view_run_ui.cbbRunView.currentIndexChanged.connect(
-            self.change_cbb_run
-        )
-        self.view_run_ui.btnRunRun.clicked.connect(self.click_btn_run)
-        self.view_run_ui.btnRunExport.clicked.connect(self.click_btn_export)
+            # load data to cbb
+            self.loaddata_cbb_run()
+            self.view_run_ui.cbbRunView.currentIndexChanged.connect(
+                self.change_cbb_run
+            )
+            self.view_run_ui.btnRunRun.clicked.connect(self.click_btn_run)
+            self.view_run_ui.btnRunExport.clicked.connect(self.click_btn_export)
 
-        # disvisiable
-        self.view_run_ui.leRunSearch.setVisible(False)
-        self.view_run_ui.cbbRunMore.setVisible(False)
-        self.view_run_ui.cbbRunWithCol.setVisible(False)
-        self.view_run_ui.label_6.setVisible(False)
-        self.view_run_ui.label_4.setVisible(False)
-        self.view_run_ui.label_7.setVisible(False)
-        self.view_run_ui.widget_4.setVisible(False)
+            # disvisiable
+            self.view_run_ui.leRunSearch.setVisible(False)
+            self.view_run_ui.cbbRunMore.setVisible(False)
+            self.view_run_ui.cbbRunWithCol.setVisible(False)
+            self.view_run_ui.label_6.setVisible(False)
+            self.view_run_ui.label_4.setVisible(False)
+            self.view_run_ui.label_7.setVisible(False)
+            self.view_run_ui.widget_4.setVisible(False)
+        except Exception as e:
+            self.show_message(
+                3,
+                "Load Data Run Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
 
     def loaddata_cbb_run(self):
         self.dataBasic.loaddata_view_run()
@@ -1674,18 +1692,26 @@ class MainWindow(QMainWindow):
         self.view_release_widgets = QWidget()
         self.view_release_ui.setupUi(self.view_release_widgets)
         self.ui.scrollArea.setWidget(self.view_release_widgets)
-        self.dataBasic.initdate_release()
-        self.enable_menu_by_index(3)
+        try:
+            self.dataBasic.initdate_release()
+            self.enable_menu_by_index(3)
 
-        # load data
-        self.loaddata_cbb_release()
-        # event
-        self.view_release_ui.btnReleaseAdd.clicked.connect(
-            self.click_btn_release
-        )
-        self.view_release_ui.cbbReleaseView.currentIndexChanged.connect(
-            self.change_cbb_release
-        )
+            # load data
+            self.loaddata_cbb_release()
+            # event
+            self.view_release_ui.btnReleaseAdd.clicked.connect(
+                self.click_btn_release
+            )
+            self.view_release_ui.cbbReleaseView.currentIndexChanged.connect(
+                self.change_cbb_release
+            )
+        except Exception as e:
+            self.show_message(
+                3,
+                "Load Data Release Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
 
     def loaddata_cbb_release(self):
         self.dataBasic.loaddata_view_release()
@@ -1750,6 +1776,219 @@ class MainWindow(QMainWindow):
                 str(e.__class__.__name__),
                 str(e),
             )
+
+    #################### CHANGE PASSWORD ###############
+    def menu_change_password(self):
+        self.refresh_var_global()
+        self.system_change_password_ui = Ui_ChangePassword()
+        self.system_change_password_widgets = QWidget()
+        self.system_change_password_ui.setupUi(
+            self.system_change_password_widgets
+        )
+        self.ui.scrollArea.setWidget(self.system_change_password_widgets)
+        self.enable_menu_by_index(4)
+
+        self.system_change_password_ui.btnChange.clicked.connect(
+            self.click_btn_change_password
+        )
+
+    def click_btn_change_password(self):
+        passwordCur = self.system_change_password_ui.lePasswordCur.text()
+        passwordNew = self.system_change_password_ui.lePasswordNew.text()
+        passwordConfirm = (
+            self.system_change_password_ui.lePasswordConfirm.text()
+        )
+        try:
+            self.users.change_password(
+                passwordCur, passwordNew, passwordConfirm
+            )
+            self.show_message(
+                1,
+                "Change Password",
+                "Change Password successfull.",
+            )
+            self.system_change_password_ui.lePasswordCur.setText("")
+            self.system_change_password_ui.lePasswordNew.setText("")
+            self.system_change_password_ui.lePasswordConfirm.setText("")
+        except Exception as e:
+            self.show_message(
+                3,
+                "Change Password Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    ############### CREATE USER ###########################
+    def menu_user_create(self):
+        self.refresh_var_global()
+        self.system_create_user_ui = Ui_CreateUser()
+        self.system_create_user_widgets = QWidget()
+        self.system_create_user_ui.setupUi(self.system_create_user_widgets)
+        self.ui.scrollArea.setWidget(self.system_create_user_widgets)
+        self.enable_menu_by_index(5)
+        try:
+            self.dataBasic.initdata_create_user()
+            self.userNew = ModuleUsers.Users(self.connect)
+            self.loaddata_user_create()
+        except Exception as e:
+            self.show_message(
+                3,
+                "Load data Dept Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+        # define event
+        self.system_create_user_ui.btnAdd.clicked.connect(
+            self.click_btn_user_add
+        )
+        self.system_create_user_ui.btnUpdate.clicked.connect(
+            self.click_btn_user_update
+        )
+        self.system_create_user_ui.btnSearch.clicked.connect(
+            self.click_btn_user_search
+        )
+        self.system_create_user_ui.btnNew.clicked.connect(
+            self.click_btn_user_new
+        )
+        self.system_create_user_ui.btnChangePassword.clicked.connect(
+            self.click_btn_user_change_password
+        )
+
+    def loaddata_user_create(self):
+        self.system_create_user_ui.cbbDept.clear()
+        self.system_create_user_ui.cbbDept.addItems(
+            self.dataBasic.get_dept_name()
+        )
+        self.system_create_user_ui.leUserName.setText(self.userNew.user)
+        self.system_create_user_ui.lePassword.setText(self.userNew.password)
+        self.system_create_user_ui.lePasswordConfirm.setText(
+            self.userNew.password
+        )
+        self.system_create_user_ui.leEmail.setText(self.userNew.email)
+        self.system_create_user_ui.leFullName.setText(self.userNew.fullname)
+        self.system_create_user_ui.lePhoneNumber.setText(self.userNew.phone)
+        self.system_create_user_ui.cbbDept.setCurrentText(
+            self.userNew.department
+        )
+        self.system_create_user_ui.cbbPermission.setCurrentText(
+            self.userNew.permission
+        )
+        self.system_create_user_ui.cbActive.setChecked(self.userNew.status)
+
+        self.system_create_user_ui.leUserName.setEnabled(
+            not self.userNew.isUpdate
+        )
+        self.system_create_user_ui.btnAdd.setEnabled(not self.userNew.isUpdate)
+        self.system_create_user_ui.btnUpdate.setEnabled(self.userNew.isUpdate)
+        self.system_create_user_ui.btnSearch.setEnabled(
+            not self.userNew.isUpdate
+        )
+        self.system_create_user_ui.btnNew.setEnabled(True)
+        self.system_create_user_ui.lePassword.setEnabled(
+            not self.userNew.isUpdate
+        )
+        self.system_create_user_ui.lePasswordConfirm.setEnabled(
+            not self.userNew.isUpdate
+        )
+        self.system_create_user_ui.btnChangePassword.setEnabled(
+            self.userNew.isUpdate
+        )
+
+    def click_btn_user_add(self):
+        userName = self.system_create_user_ui.leUserName.text()
+        password = self.system_create_user_ui.lePassword.text()
+        passwordConfirm = self.system_create_user_ui.lePasswordConfirm.text()
+        email = self.system_create_user_ui.leEmail.text()
+        fullName = self.system_create_user_ui.leFullName.text()
+        phone = self.system_create_user_ui.lePhoneNumber.text()
+        depts = self.system_create_user_ui.cbbDept.currentText()
+        per = self.system_create_user_ui.cbbPermission.currentText()
+        status = self.system_create_user_ui.cbActive.isChecked()
+        try:
+            userNo = self.userNew.add(
+                userName,
+                password,
+                passwordConfirm,
+                email,
+                fullName,
+                phone,
+                depts,
+                per,
+                status,
+            )
+            self.show_message(
+                1,
+                "Add User",
+                "Add user successfull. UserNo: " + str(userNo),
+            )
+            self.click_btn_user_new()
+        except Exception as e:
+            self.show_message(
+                3,
+                "Add User Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    def click_btn_user_update(self):
+        userName = self.system_create_user_ui.leUserName.text()
+        password = self.system_create_user_ui.lePassword.text()
+        passwordConfirm = self.system_create_user_ui.lePasswordConfirm.text()
+        email = self.system_create_user_ui.leEmail.text()
+        fullName = self.system_create_user_ui.leFullName.text()
+        phone = self.system_create_user_ui.lePhoneNumber.text()
+        depts = self.system_create_user_ui.cbbDept.currentText()
+        per = self.system_create_user_ui.cbbPermission.currentText()
+        status = self.system_create_user_ui.cbActive.isChecked()
+        try:
+            self.userNew.update(
+                userName,
+                password,
+                passwordConfirm,
+                email,
+                fullName,
+                phone,
+                depts,
+                per,
+                status,
+            )
+            self.show_message(
+                1,
+                "Update User",
+                "Update user successfull",
+            )
+            self.click_btn_user_new()
+        except Exception as e:
+            self.show_message(
+                3,
+                "Update User Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    def click_btn_user_search(self):
+        userName = self.system_create_user_ui.leUserName.text()
+        if userName.strip() != "":
+            try:
+                self.userNew = self.dataBasic.get_user_by_name(userName)
+                self.userNew.set_update(True)
+                self.loaddata_user_create()
+            except Exception as e:
+                self.show_message(
+                    3,
+                    "Search User Error",
+                    str(e.__class__.__name__),
+                    str(e),
+                )
+
+    def click_btn_user_change_password(self):
+        self.system_create_user_ui.lePasswordConfirm.setEnabled(True)
+        self.system_create_user_ui.lePassword.setEnabled(True)
+
+    def click_btn_user_new(self):
+        self.userNew = ModuleUsers.Users(self.connect)
+        self.loaddata_user_create()
 
 
 if __name__ == "__main__":

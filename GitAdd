@@ -25,6 +25,7 @@ git add ModuleViewAction.py
 git add ModuleSecurity.py
 git add frmCreateUser.ui
 git add frmChangePassword.ui
+git add GitAdd
 
 git init
 git commit -m "first commit"

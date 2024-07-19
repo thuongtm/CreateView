@@ -1,5 +1,5 @@
 # This Python file uses the following encoding: utf-8
-import Sentences, Connect, ModuleDataSets, ModuleFunctions, ModuleCalculations, ModuleViewAction
+import Sentences, Connect, ModuleDataSets, ModuleFunctions, ModuleCalculations, ModuleViewAction, ModuleUsers
 import copy
 import pandas as pd
 
@@ -19,6 +19,7 @@ class DataBasics:
         self.dataRun = pd.DataFrame()
         self.includedViewName = []
         self.viewNameAll = []
+        self.depts = []
 
     def initdata_create(self):
         self.loaddata_dataset_all()
@@ -42,6 +43,9 @@ class DataBasics:
         self.loaddata_function()
         self.loaddata_calculation()
         self.loaddata_view_run()
+
+    def initdata_create_user(self):
+        self.get_list_dept()
 
     def loaddata_dataset_all(self):
         self.datasetList = []
@@ -219,9 +223,6 @@ class DataBasics:
                     "Do not find data with table {0}".format(table)
                 )
             else:
-                data = data.replace({pd.NA: None})
-                data = data.replace({pd.NaT: None})
-                data = data.fillna("")
                 return data
         except:
             raise
@@ -315,5 +316,46 @@ class DataBasics:
                     data_export.to_csv(
                         linkfile, index=False, encoding="utf-8", sep="\t"
                     )
+        except:
+            raise
+
+    def get_list_dept(self):
+        sql = self.sentence.sql_get_dept()
+        try:
+            data = self.connect.get_data_operation(sql)
+            data = data.replace({pd.NA: None})
+            data = data.replace({pd.NaT: None})
+            data = data.fillna("")
+            if data.empty:
+                raise ValueError("Do not find dept")
+            else:
+                self.depts = []
+                for item in data.iloc:
+                    self.depts.append(item.to_list())
+        except:
+            raise
+
+    def get_dept_name(self):
+        listName = []
+        for item in self.depts:
+            listName.append(item[1])
+        if len(listName) > 0:
+            return [""] + listName
+        else:
+            return listName
+
+    def get_user_by_name(self, userName):
+        sql = self.sentence.sql_user_search(userName)
+        try:
+            data = self.connect.get_data_operation(sql)
+            data = data.replace({pd.NA: None})
+            data = data.replace({pd.NaT: None})
+            data = data.fillna("")
+            if data.empty:
+                raise ValueError("Do not found user".format(userName))
+            else:
+                user = ModuleUsers.Users(self.connect)
+                user.set_user(data.iloc[0])
+                return user
         except:
             raise

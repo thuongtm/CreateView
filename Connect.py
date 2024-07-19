@@ -372,3 +372,56 @@ class Connect:
         finally:
             cursors.close()
             connection.close()
+
+    def change_password(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc(
+                "t_proc_user_change_password",
+                parameters=parameter,
+            )
+        except:
+            pass
+        finally:
+            cursors.close()
+            connection.close()
+
+    def add_user(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            newUserNo = cursors.callfunc(
+                "t_proc_user_add",
+                parameters=parameter,
+                return_type=int,
+            )
+            return newUserNo
+        except:
+            raise
+        finally:
+            cursors.close()
+            connection.close()
+
+    def update_user(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc("t_proc_user_update", parameters=parameter)
+        except:
+            raise
+        finally:
+            cursors.close()
+            connection.close()

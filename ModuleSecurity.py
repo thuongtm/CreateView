@@ -11,7 +11,7 @@ class Security:
     def encrypt(self, text):
         try:
             fernet = Fernet(self.key)
-            return fernet.encrypt(text.encode())
+            return fernet.encrypt(text.encode()).decode()
         except:
             raise
 

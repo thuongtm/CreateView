@@ -515,10 +515,10 @@
      </property>
      <layout class="QFormLayout" name="formLayout">
       <property name="horizontalSpacing">
-       <number>10</number>
+       <number>15</number>
       </property>
       <property name="verticalSpacing">
-       <number>30</number>
+       <number>25</number>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -535,32 +535,106 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>UserName:</string>
+         <string>UserName*:</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLineEdit" name="lineEdit"/>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QLineEdit" name="leUserName"/>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnSearch">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>26</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>26</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="images.qrc">
+            <normaloff>:/images/images/gnome-search-tool.png</normaloff>:/images/images/gnome-search-tool.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>18</width>
+            <height>18</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Password:</string>
+         <string>Password*:</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QLineEdit" name="lineEdit_2"/>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QLineEdit" name="lePassword">
+          <property name="echoMode">
+           <enum>QLineEdit::Password</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnChangePassword">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="images.qrc">
+            <normaloff>:/images/images/create.png</normaloff>:/images/images/create.png</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Confirm Password:</string>
+         <string>Confirm Password*:</string>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLineEdit" name="lineEdit_3"/>
+       <widget class="QLineEdit" name="lePasswordConfirm">
+        <property name="echoMode">
+         <enum>QLineEdit::Password</enum>
+        </property>
+       </widget>
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="label_4">
@@ -570,17 +644,17 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QLineEdit" name="lineEdit_4"/>
+       <widget class="QLineEdit" name="leEmail"/>
       </item>
       <item row="4" column="0">
        <widget class="QLabel" name="label_5">
         <property name="text">
-         <string>Departments:</string>
+         <string>Departments*:</string>
         </property>
        </widget>
       </item>
       <item row="4" column="1">
-       <widget class="QComboBox" name="comboBox"/>
+       <widget class="QComboBox" name="cbbDept"/>
       </item>
       <item row="5" column="0">
        <spacer name="horizontalSpacer">
@@ -596,7 +670,7 @@
        </spacer>
       </item>
       <item row="5" column="1">
-       <widget class="QCheckBox" name="checkBox">
+       <widget class="QCheckBox" name="cbActive">
         <property name="text">
          <string>Active</string>
         </property>
@@ -613,17 +687,33 @@
        </widget>
       </item>
       <item row="6" column="1">
-       <widget class="QLineEdit" name="lineEdit_5"/>
+       <widget class="QLineEdit" name="leFullName"/>
       </item>
       <item row="7" column="0">
        <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>Permissions:</string>
+         <string>Permissions*:</string>
         </property>
        </widget>
       </item>
       <item row="7" column="1">
-       <widget class="QComboBox" name="comboBox_2"/>
+       <widget class="QComboBox" name="cbbPermission">
+        <item>
+         <property name="text">
+          <string>ANY</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>GROUP</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>ALL</string>
+         </property>
+        </item>
+       </widget>
       </item>
       <item row="8" column="0">
        <widget class="QLabel" name="label_9">
@@ -633,7 +723,7 @@
        </widget>
       </item>
       <item row="8" column="1">
-       <widget class="QLineEdit" name="lineEdit_6"/>
+       <widget class="QLineEdit" name="lePhoneNumber"/>
       </item>
       <item row="9" column="0">
        <spacer name="horizontalSpacer_4">
@@ -654,7 +744,20 @@
          <number>30</number>
         </property>
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnAdd">
           <property name="minimumSize">
            <size>
             <width>100</width>
@@ -688,7 +791,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="btnUpdate">
           <property name="minimumSize">
            <size>
             <width>100</width>
@@ -722,7 +825,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_3">
+         <widget class="QPushButton" name="btnNew">
           <property name="minimumSize">
            <size>
             <width>100</width>
@@ -741,19 +844,26 @@
            </font>
           </property>
           <property name="text">
-           <string>   Delete</string>
+           <string>   New</string>
           </property>
           <property name="icon">
            <iconset resource="images.qrc">
-            <normaloff>:/images/images/remove.png</normaloff>:/images/images/remove.png</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>18</width>
-            <height>18</height>
-           </size>
+            <normaloff>:/images/images/new-file.png</normaloff>:/images/images/new-file.png</iconset>
           </property>
          </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>

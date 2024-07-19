@@ -144,3 +144,11 @@ class Sentences:
     def header_included_table(self):
         listHeader = ["Action", "ViewName", "Column", "TypeConnect"]
         return listHeader
+
+    def sql_get_dept(self):
+        sql = """SELECT groupno, departments FROM TDepts where Status = 1"""
+        return sql
+
+    def sql_user_search(self, userName):
+        sql = """SELECT *  from tusers where USERS = '{0}'""".format(userName)
+        return sql
