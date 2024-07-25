@@ -1,9 +1,9 @@
 # This Python file uses the following encoding: utf-8
-import Sentences, Connect, ModuleColumns
+import Sentences, Connects, ModuleColumns
 
 
 class DataSets:
-    def __init__(self, connect=None, user=None):
+    def __init__(self, connects):
         self.datasetNo = int()
         self.datasetName = str()
         self.datasetTable = str()
@@ -19,7 +19,7 @@ class DataSets:
         self.userNo1 = int()
         self.columnList = []
         self.sentence = Sentences.Sentences()
-        self.connect = Connect.Connect(connect)
+        self.connects = Connects.Connects(connects)
 
     def set_no(self, index):
         self.datasetNo = index
@@ -54,7 +54,7 @@ class DataSets:
     def set_column_list(self):
         sql = self.sentence.sql_get_column_of_dataset(self.datasetNo)
         try:
-            dataColumn = self.connect.get_data_operation(sql)
+            dataColumn = self.connects.get_data_operation(sql)
             if dataColumn.empty:
                 raise ValueError("Do not found Column of DataSet")
             else:
@@ -69,7 +69,7 @@ class DataSets:
         listName = []
         for item in self.columnList:
             listName.append(item.columnName)
-        return listName
+        return sorted(listName)
 
     def add_column_new(self, function):
         col = ModuleColumns.Columns()

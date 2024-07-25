@@ -6,7 +6,7 @@ git add frmCreateView.ui
 git add frmRelease.ui
 git add frmRun.ui
 git add frmSearch.ui
-git add Connect.py
+git add Connects.py
 git add config.xml
 git add Sentences.py
 git add ModuleDataBasics.py
@@ -26,6 +26,11 @@ git add ModuleSecurity.py
 git add frmCreateUser.ui
 git add frmChangePassword.ui
 git add GitAdd
+git add frmViewManual.ui
+git add ModuleViewManuals.py
+git add frmResult.ui
+git add rc_images.py
+git add requirements.txt
 
 git init
 git commit -m "first commit"

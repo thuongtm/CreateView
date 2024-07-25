@@ -57,5 +57,6 @@
         <file>images/update3.png</file>
         <file>images/reset-password.png</file>
         <file>images/user.png</file>
+        <file>images/hammer.png</file>
     </qresource>
 </RCC>

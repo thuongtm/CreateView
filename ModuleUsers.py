@@ -1,12 +1,12 @@
 # This Python file uses the following encoding: utf-8
 import Sentences
-import Connect
+import Connects
 import ModuleWriteLogs, ModuleSecurity
 
 
 class Users:
-    def __init__(self, connect):
-        self.connect = Connect.Connect(connect)
+    def __init__(self, connects):
+        self.connects = Connects.Connects(connects)
         self.userno = int()
         self.user = str()
         self.password = str()
@@ -18,11 +18,27 @@ class Users:
         self.phone = str()
         self.sentence = Sentences.Sentences()
         self.isLogin = False
-        self.writeLog = ModuleWriteLogs.WriteLogs(connect)
+        self.writeLog = ModuleWriteLogs.WriteLogs(connects)
         self.sercurity = ModuleSecurity.Security()
-        self.status = True
+        self.status = True  # 1 yes 2 no
 
         self.isUpdate = False
+
+    def assign(self, user):
+        self.connects = user.connects
+        self.userno = user.userno
+        self.user = user.user
+        self.password = user.password
+        self.email = user.email
+        self.department = user.department
+        self.group = user.group
+        self.fullname = user.fullname
+        self.permission = user.permission
+        self.phone = user.phone
+        self.isLogin = user.isLogin
+        self.status = user.status  # 1 yes 2 no
+
+        self.isUpdate = user.isUpdate
 
     def set_status(self, index):
         if index == 1:
@@ -66,7 +82,7 @@ class Users:
     def login_check(self, user, password):
         sql = self.sentence.sql_login_check(user)
         try:
-            userAll = self.connect.get_data_operation(sql)
+            userAll = self.connects.get_data_operation(sql)
             if len(userAll) == 0:
                 return "Login Faild. Not found username"
             else:
@@ -103,7 +119,7 @@ class Users:
         if isCheck:
             try:
                 passChange = self.sercurity.encrypt(passNew)
-                self.connect.change_password([self.userno, passChange])
+                self.connects.change_password([self.userno, passChange])
                 self.password = passNew
                 self.writeLog.write_transaction(
                     [
@@ -161,7 +177,7 @@ class Users:
             if not status:
                 statusText = 0
             try:
-                userNo = self.connect.add_user(
+                userNo = self.connects.add_user(
                     [
                         userName,
                         passwordChange,
@@ -229,7 +245,7 @@ class Users:
             if not status:
                 statusText = 0
             try:
-                self.connect.update_user(
+                self.connects.update_user(
                     [
                         userName,
                         passwordChange,

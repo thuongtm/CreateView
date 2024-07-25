@@ -1,18 +1,20 @@
 # This Python file uses the following encoding: utf-8
-import Sentences, Connect, ModuleDataSets, ModuleFunctions, ModuleCalculations, ModuleViewAction, ModuleUsers
+import Sentences, Connects, ModuleDataSets, ModuleFunctions, ModuleCalculations
+import ModuleViewAction, ModuleUsers
 import copy
 import pandas as pd
 
 
 class DataBasics:
-    def __init__(self, connect, user):
+    def __init__(self, connects, user):
         self.datasetList = []
         self.sentence = Sentences.Sentences()
-        self.connect = Connect.Connect(connect)
+        self.connects = Connects.Connects(connects)
         self.functionList = []
         self.calculationList = []
         self.dataSearch = pd.DataFrame()
-        self.user = user
+        self.user = ModuleUsers.Users(connects)
+        self.user.assign(user)
         self.idNew = int()
         self.actionViewList = []
         self.runViewList = []
@@ -53,7 +55,7 @@ class DataBasics:
             self.user.permission, self.user.group
         )
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             data = data.replace({pd.NA: None})
             data = data.replace({pd.NaT: None})
             data = data.fillna("")
@@ -61,7 +63,7 @@ class DataBasics:
                 raise ValueError("Do not found DataSet in Database.")
             else:
                 for item in data.iloc:
-                    dataset = ModuleDataSets.DataSets()
+                    dataset = ModuleDataSets.DataSets(self.connects)
                     dataset.set_dataset(item)
                     self.datasetList.append(dataset)
         except:
@@ -81,7 +83,7 @@ class DataBasics:
     def loaddata_view_id(self):
         sql = self.sentence.sql_get_view_new_id()
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             if data.empty:
                 raise ValueError("Error when get ID new of View")
             else:
@@ -93,7 +95,7 @@ class DataBasics:
         self.functionList = []
         sql = self.sentence.sql_get_function_all()
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             data = data.replace({pd.NA: None})
             data = data.replace({pd.NaT: None})
             data = data.fillna("")
@@ -111,7 +113,7 @@ class DataBasics:
         self.calculationList = []
         sql = self.sentence.sql_get_calculation_all()
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             data = data.replace({pd.NA: None})
             data = data.replace({pd.NaT: None})
             data = data.fillna("")
@@ -131,7 +133,7 @@ class DataBasics:
         )
         try:
             self.dataSearch = pd.DataFrame()
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             if not data.empty:
                 self.dataSearch = data
         except:
@@ -143,7 +145,7 @@ class DataBasics:
         )
         try:
             self.viewNameAll = []
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             if not data.empty:
                 for item in data.iloc:
                     self.viewNameAll.append(item.viewname)
@@ -154,7 +156,7 @@ class DataBasics:
         sql = self.sentence.sql_get_view_name_included()
         try:
             self.includedViewName = []
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             if not data.empty:
                 for item in data.iloc:
                     self.includedViewName.append(item.viewname)
@@ -214,7 +216,7 @@ class DataBasics:
     def loaddata_30line_dataset(self, table):
         sql = self.sentence.sql_get_30line_dataset(table)
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             data = data.replace({pd.NA: None})
             data = data.replace({pd.NaT: None})
             data = data.fillna("")
@@ -238,7 +240,7 @@ class DataBasics:
             self.user.permission, self.user.group, self.user.userno
         )
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             for item in data.iloc:
                 vAction = ModuleViewAction.ViewAction()
                 vAction.set_data(item)
@@ -266,7 +268,7 @@ class DataBasics:
             self.user.permission, self.user.group, self.user.userno
         )
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             for item in data.iloc:
                 vAction = ModuleViewAction.ViewAction()
                 vAction.set_data(item)
@@ -290,7 +292,7 @@ class DataBasics:
 
     def run(self, sql):
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             data = data.replace({pd.NA: None})
             data = data.replace({pd.NaT: None})
             data = data.fillna("")
@@ -319,10 +321,31 @@ class DataBasics:
         except:
             raise
 
+    def exportToFileData(self, data, res=tuple()):
+        try:
+            linkfile = str(res[0])
+            if len(data) > 0:
+                data_export = copy.deepcopy(data)
+                for col in data_export.columns:
+                    data_export[col] = data_export[col].astype(str)
+                if str(linkfile[::-1][:5]) == "xslx.":
+                    data_export.to_excel(
+                        linkfile,
+                        index=False,
+                        sheet_name="DataExport",
+                        engine="xlsxwriter",
+                    )
+                else:
+                    data_export.to_csv(
+                        linkfile, index=False, encoding="utf-8", sep="\t"
+                    )
+        except:
+            raise
+
     def get_list_dept(self):
         sql = self.sentence.sql_get_dept()
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             data = data.replace({pd.NA: None})
             data = data.replace({pd.NaT: None})
             data = data.fillna("")
@@ -347,15 +370,46 @@ class DataBasics:
     def get_user_by_name(self, userName):
         sql = self.sentence.sql_user_search(userName)
         try:
-            data = self.connect.get_data_operation(sql)
+            data = self.connects.get_data_operation(sql)
             data = data.replace({pd.NA: None})
             data = data.replace({pd.NaT: None})
             data = data.fillna("")
             if data.empty:
                 raise ValueError("Do not found user".format(userName))
             else:
-                user = ModuleUsers.Users(self.connect)
+                user = ModuleUsers.Users(self.connects)
                 user.set_user(data.iloc[0])
                 return user
+        except:
+            raise
+
+    def get_view_manual_by_search(self, viewName):
+        sql = self.sentence.sql_get_view_manual_all_name(viewName)
+        try:
+            data = self.connects.get_data_operation(sql)
+            if data.empty:
+                raise ValueError(
+                    "Not found view with name {0}".format(viewName)
+                )
+            else:
+                return data
+        except:
+            raise
+
+    def loaddata_view_manual(self, viewName):
+        sql = self.sentence.sql_get_view_manual_by_name(viewName)
+        try:
+            data = self.connects.get_data_operation(sql)
+            if data.empty:
+                raise ValueError(
+                    "Not found view with name {0}".format(viewName)
+                )
+            elif len(data) != 1:
+                raise ValueError("View duplicate. Please check view name.")
+            else:
+                data = data.replace({pd.NA: None})
+                data = data.replace({pd.NaT: None})
+                data = data.fillna("")
+                return data
         except:
             raise

@@ -1,13 +1,15 @@
 # This Python file uses the following encoding: utf-8
-import Sentences, ModuleDataSets, ModuleCalculations, ModuleSorts, ModuleFunctions, ModuleWriteLogs
+import Sentences, ModuleDataSets, ModuleCalculations, ModuleSorts
+import ModuleFunctions, ModuleWriteLogs, Connects, ModuleUsers
 import copy
 import pandas as pd
 
 
 class Views:
-    def __init__(self, connect=None, user=None):
-        self.connect = connect
-        self.user = user
+    def __init__(self, connects, users):
+        self.connects = Connects.Connects(connects)
+        self.user = ModuleUsers.Users(connects)
+        self.user.assign(users)
         self.viewNo = int()
         self.viewName = str()
         self.rowSelects = int()
@@ -19,7 +21,7 @@ class Views:
         self.viewStatus = int()
         self.includedType = str()
         self.includedView = str()
-        self.dataset = ModuleDataSets.DataSets(connect, user)
+        self.dataset = ModuleDataSets.DataSets(connects)
         self.columnSelected = []
         self.sortSelect = []
         self.columnNewList = []
@@ -33,7 +35,7 @@ class Views:
         self.isRelease = False  # status release
         self.isDataRelease = False
         self.isInDB = False  # check release
-        self.writeLog = ModuleWriteLogs.WriteLogs()  # writelog transaction
+        self.writeLog = ModuleWriteLogs.WriteLogs(self.connects)  # writelog transaction
 
     def get_str_view_no(self):
         if self.viewNo == 0:
@@ -167,9 +169,11 @@ class Views:
         return sql
 
     def get_name_column_not_select(self):
-        return list(
-            set(self.get_name_column_selected())
-            ^ set(self.dataset.get_name_column())
+        return sorted(
+            list(
+                set(self.get_name_column_selected())
+                ^ set(self.dataset.get_name_column())
+            )
         )
 
     def get_column_not_by_name(self, name):
@@ -629,7 +633,7 @@ class Views:
         # insert header
         isCheck = False
         try:
-            self.viewNo = self.connect.insert_header_view(
+            self.viewNo = self.connects.insert_header_view(
                 self.sql_insert_header()
             )
             isCheck = True
@@ -643,14 +647,14 @@ class Views:
                     col = self.columnSelected[i]
                     col.set_line(i)
                     col.set_view_no(self.viewNo)
-                    self.connect.insert_view_line_column(col.sql_insert())
+                    self.connects.insert_view_line_column(col.sql_insert())
 
                 # insert column new
                 for i in range(0, len(self.columnNewList)):
                     newCol = self.columnNewList[i]
                     newCol.set_line(i)
                     newCol.set_view_no(self.viewNo)
-                    self.connect.insert_view_line_column_new(
+                    self.connects.insert_view_line_column_new(
                         newCol.sql_insert()
                     )
                 # insert sort
@@ -658,19 +662,19 @@ class Views:
                     sort = self.sortSelect[i]
                     sort.set_line(i)
                     sort.set_view_no(self.viewNo)
-                    self.connect.insert_view_line_sort(sort.sql_insert())
+                    self.connects.insert_view_line_sort(sort.sql_insert())
                 # insert filter
                 for i in range(0, len(self.whereSelected)):
                     where = self.whereSelected[i]
                     where.set_line(i)
                     where.set_view_no(self.viewNo)
-                    self.connect.insert_view_line_filter(where.sql_insert())
+                    self.connects.insert_view_line_filter(where.sql_insert())
                 # having
                 for i in range(0, len(self.havingSelected)):
                     having = self.havingSelected[i]
                     having.set_line(i)
                     having.set_view_no(self.viewNo)
-                    self.connect.insert_view_line_filter(having.sql_insert())
+                    self.connects.insert_view_line_filter(having.sql_insert())
                 self.writeLog.write_transaction(
                     [
                         self.user.userno,
@@ -717,7 +721,7 @@ class Views:
     def loadData(self, dataBasic):
         sql = self.sentence.sql_load_view_by_no(self.viewNo)
         try:
-            dataView = self.connect.get_data_operation(sql)
+            dataView = self.connects.get_data_operation(sql)
             dataView = dataView.replace({pd.NA: None})
             dataView = dataView.replace({pd.NaT: None})
             dataView = dataView.fillna("")
@@ -744,7 +748,7 @@ class Views:
     def loaddata_columnnew(self, dataBasic):
         sql = self.sentence.sql_load_columnnew(self.viewNo)
         try:
-            dataColumn = self.connect.get_data_operation(sql)
+            dataColumn = self.connects.get_data_operation(sql)
             if not dataColumn.empty:
                 dataColumn = dataColumn.replace({pd.NA: None})
                 dataColumn = dataColumn.replace({pd.NaT: None})
@@ -765,7 +769,7 @@ class Views:
     def loaddata_filter(self, dataBasic):
         sql = self.sentence.sql_load_filter(self.viewNo)
         try:
-            dataFilter = self.connect.get_data_operation(sql)
+            dataFilter = self.connects.get_data_operation(sql)
             dataFilter = dataFilter.replace({pd.NA: None})
             dataFilter = dataFilter.replace({pd.NaT: None})
             dataFilter = dataFilter.fillna("")
@@ -788,7 +792,7 @@ class Views:
     def loaddata_select_column(self):
         sql = self.sentence.sql_load_column_select(self.viewNo)
         try:
-            dataColumn = self.connect.get_data_operation(sql)
+            dataColumn = self.connects.get_data_operation(sql)
             dataColumn = dataColumn.replace({pd.NA: None})
             dataColumn = dataColumn.replace({pd.NaT: None})
             dataColumn = dataColumn.fillna("")
@@ -804,7 +808,7 @@ class Views:
     def loaddata_sort(self):
         sql = self.sentence.sql_load_sort(self.viewNo)
         try:
-            dataSort = self.connect.get_data_operation(sql)
+            dataSort = self.connects.get_data_operation(sql)
             dataSort = dataSort.replace({pd.NA: None})
             dataSort = dataSort.replace({pd.NaT: None})
             dataSort = dataSort.fillna("")
@@ -825,37 +829,37 @@ class Views:
                 col = self.columnSelected[i]
                 col.set_line(i)
                 col.set_view_no(self.viewNo)
-                self.connect.update_view_line_column(col.sql_insert())
+                self.connects.update_view_line_column(col.sql_insert())
 
             # new col
             for i in range(0, len(self.columnNewList)):
                 newCol = self.columnNewList[i]
                 newCol.set_line(i)
                 newCol.set_view_no(self.viewNo)
-                self.connect.update_view_line_column_new(newCol.sql_insert())
+                self.connects.update_view_line_column_new(newCol.sql_insert())
 
             # insert sort
             for i in range(0, len(self.sortSelect)):
                 sort = self.sortSelect[i]
                 sort.set_line(i)
                 sort.set_view_no(self.viewNo)
-                self.connect.update_view_line_sort(sort.sql_insert())
+                self.connects.update_view_line_sort(sort.sql_insert())
             # insert filter
             for i in range(0, len(self.whereSelected)):
                 where = self.whereSelected[i]
                 where.set_line(i)
                 where.set_view_no(self.viewNo)
-                self.connect.update_view_line_filter(where.sql_insert())
+                self.connects.update_view_line_filter(where.sql_insert())
 
             # having
             for i in range(0, len(self.havingSelected)):
                 having = self.havingSelected[i]
                 having.set_line(i)
                 having.set_view_no(self.viewNo)
-                self.connect.update_view_line_filter(having.sql_insert())
+                self.connects.update_view_line_filter(having.sql_insert())
 
             # header
-            self.connect.update_header_view(self.sql_update_header())
+            self.connects.update_header_view(self.sql_update_header())
             self.writeLog.write_transaction(
                 [self.user.userno, "View", self.viewNo, "CreateView", "Update"]
             )
@@ -865,7 +869,7 @@ class Views:
 
     def delete(self):
         try:
-            self.connect.delete_header_view(self.sql_delete_header())
+            self.connects.delete_header_view(self.sql_delete_header())
             self.writeLog.write_transaction(
                 [self.user.userno, "View", self.viewNo, "CreateView", "Delete"]
             )
@@ -881,11 +885,10 @@ class Views:
 
     def release(self, dataBasic):
         try:
-
             self.loadData(dataBasic)
             if not self.isRelease:
                 if self.viewStatus == 1:
-                    self.connect.excute_query(self.db_create_view())
+                    self.connects.excute_query(self.db_create_view())
                     self.writeLog.write_transaction(
                         [
                             self.user.userno,
@@ -896,27 +899,40 @@ class Views:
                         ]
                     )
                 elif self.viewStatus == 2:
-                    self.connect.excute_query(self.db_update_view())
-                    self.writeLog.write_transaction(
-                        [
-                            self.user.userno,
-                            "View",
-                            self.viewNo,
-                            "Release",
-                            "Update",
-                        ]
-                    )
-                else:
-                    self.connect.excute_query(self.db_delete_view())
-                    self.writeLog.write_transaction(
-                        [
-                            self.user.userno,
-                            "View",
-                            self.viewNo,
-                            "Release",
-                            "Delete",
-                        ]
-                    )
+                    if self.isInDB:
+                        self.connects.excute_query(self.db_update_view())
+                        self.writeLog.write_transaction(
+                            [
+                                self.user.userno,
+                                "View",
+                                self.viewNo,
+                                "Release",
+                                "Update",
+                            ]
+                        )
+                    else:
+                        self.connects.excute_query(self.db_create_view())
+                        self.writeLog.write_transaction(
+                            [
+                                self.user.userno,
+                                "View",
+                                self.viewNo,
+                                "Release",
+                                "Create",
+                            ]
+                        )
+                elif self.viewStatus == 3:
+                    if self.isInDB:
+                        self.connects.excute_query(self.db_delete_view())
+                        self.writeLog.write_transaction(
+                            [
+                                self.user.userno,
+                                "View",
+                                self.viewNo,
+                                "Release",
+                                "Delete",
+                            ]
+                        )
             self.update_status_release()
         except:
             raise
@@ -948,7 +964,7 @@ class Views:
 
     def update_status_release(self):
         try:
-            sql = self.connect.update_view_release_status([self.viewNo])
+            self.connects.update_view_release_status([self.viewNo])
         except:
             raise
 

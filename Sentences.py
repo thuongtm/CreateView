@@ -39,7 +39,7 @@ class Sentences:
 
     # get ViewName by permission
     def sql_get_view_name_all(self, permiss, groups, userno):
-        sql = "SELECT ViewNo, ViewName  FROM TViews"
+        sql = "SELECT ViewName  FROM TViews UNION ALL SELECT VIEWNAME from TVIEWMANUAL"
         return sql
 
     def sql_get_view_search(self, permiss, groups, userno):
@@ -151,4 +151,18 @@ class Sentences:
 
     def sql_user_search(self, userName):
         sql = """SELECT *  from tusers where USERS = '{0}'""".format(userName)
+        return sql
+
+    def sql_get_view_manual_all_name(self, viewName):
+        while str(viewName).find("*") >= 0:
+            viewName = str(viewName).replace("*", "%")
+        sql = """SELECT VIEWNAME from TVIEWMANUAL where VIEWNAME like '{0}'""".format(
+            viewName
+        )
+        return sql
+
+    def sql_get_view_manual_by_name(self, viewName):
+        sql = """SELECT * from TVIEWMANUAL where VIEWNAME = '{0}'""".format(
+            viewName
+        )
         return sql

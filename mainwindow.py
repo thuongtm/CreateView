@@ -1,4 +1,5 @@
 import sys, copy
+import pandas as pd
 
 from PySide6.QtWidgets import (
     QMessageBox,
@@ -30,10 +31,13 @@ from ui_frmLogin import Ui_frmLogin
 from ui_frmViewData import Ui_frmViewData
 from ui_frmChangePassword import Ui_ChangePassword
 from ui_frmCreateUser import Ui_CreateUser
+from ui_frmViewManual import Ui_CreateManual
+from ui_frmResult import Ui_ShowResult
 
 # import Module
-import Connect, ModuleUsers, ModuleDataBasics, ModuleViews, ModuleColumns
-import ModuleSorts, Sentences, ModuleFunctions, ModuleCalculations, TableViewModel, ModuleViewAction, ModuleWriteLogs
+import Connects, ModuleUsers, ModuleDataBasics, ModuleViews, ModuleColumns
+import ModuleSorts, Sentences, ModuleFunctions, ModuleCalculations
+import TableViewModel, ModuleViewAction, ModuleWriteLogs, ModuleViewManuals
 
 
 class MainWindow(QMainWindow):
@@ -66,16 +70,19 @@ class MainWindow(QMainWindow):
             self.menu_change_password
         )
         self.ui.actionCreate_User.triggered.connect(self.menu_user_create)
+        self.ui.actionCreate_View_Manual.triggered.connect(
+            self.menu_view_create_manual
+        )
 
         # define variable global
         try:
-            self.connect = Connect.Connect()
-            self.users = ModuleUsers.Users(self.connect)
+            self.connects = Connects.Connects()
+            self.users = ModuleUsers.Users(self.connects)
             self.sentence = Sentences.Sentences()
             self.dataBasic = ModuleDataBasics.DataBasics(
-                self.connect, self.users
+                self.connects, self.users
             )
-            self.writeLog = ModuleWriteLogs.WriteLogs()
+            self.writeLog = ModuleWriteLogs.WriteLogs(self.connects)
         except Exception as e:
             self.show_message(3, "Exception", str(e.__class__.__name__), str(e))
 
@@ -90,6 +97,7 @@ class MainWindow(QMainWindow):
         self.ui.actionCreate_User.setEnabled(
             self.users.is_admin() and index != 5
         )
+        self.ui.actionCreate_View_Manual.setEnabled(index != 6)
 
     def show_message(self, type, title, content, moreinfo=None):
         messageBox = QMessageBox()
@@ -132,7 +140,7 @@ class MainWindow(QMainWindow):
 
     # define enable visiable when login or not login
     def refresh_var_global(self):
-        self.viewCurrent = ModuleViews.Views(self.connect, self.users)
+        self.viewCurrent = ModuleViews.Views(self.connects, self.users)
         self.columnCur = ModuleColumns.Columns()
         self.sortCur = ModuleSorts.Sorts()
         self.functionCur = ModuleFunctions.Functions()
@@ -181,7 +189,7 @@ class MainWindow(QMainWindow):
 
     def menu_log_out(self):
         self.writeLog.write_login(self.users.user, "Out")
-        self.users = ModuleUsers.Users(self.connect)
+        self.users = ModuleUsers.Users(self.connects)
         self.loadfrm_login()
 
     def menu_view_home(self):
@@ -265,7 +273,7 @@ class MainWindow(QMainWindow):
     def itemclick_tbw_search(self, item):
         try:
             row = self.view_search_ui.tbwSearch.row(item)
-            self.viewUpdate = ModuleViews.Views(self.connect, self.users)
+            self.viewUpdate = ModuleViews.Views(self.connects, self.users)
             self.viewUpdate.set_no(
                 int(self.view_search_ui.tbwSearch.item(row, 0).text())
             )
@@ -285,7 +293,10 @@ class MainWindow(QMainWindow):
             self.view_search_ui.buttonBox.buttonRole(button)
             == QDialogButtonBox.ButtonRole.AcceptRole
         ):
+            self.view_search_widgets.accept()
             self.loaddata_view_update()
+        else:
+            self.view_search_widgets.reject()
 
     def double_itemclick_search(self):
         self.view_search_widgets.accept()
@@ -304,7 +315,7 @@ class MainWindow(QMainWindow):
                     self.viewCurrent.viewName
                 )
             )
-            self.viewUpdate = ModuleViews.Views(self.connect, self.users)
+            self.viewUpdate = ModuleViews.Views(self.connects, self.users)
         except Exception as e:
             self.show_message(
                 3, "Load info View", str(e.__class__.__name__), str(e)
@@ -322,7 +333,7 @@ class MainWindow(QMainWindow):
         # defin variable
         try:
             self.dataBasic.initdata_create()
-            self.viewCurrent = ModuleViews.Views(self.connect, self.users)
+            self.viewCurrent = ModuleViews.Views(self.connects, self.users)
         except Exception as e:
             self.show_message(
                 3, "Exception when Load Data", "Define variable", str(e.args)
@@ -487,7 +498,7 @@ class MainWindow(QMainWindow):
                 )
                 self.view_create_ui.cbbViewDataSet.setCurrentIndex(0)
         else:
-            self.viewCurrent = ModuleViews.Views(self.connect, self.users)
+            self.viewCurrent = ModuleViews.Views(self.connects, self.users)
 
         # define info after select dataset
         self.click_btn_tab_select_column()  # --> select tab select column
@@ -532,6 +543,7 @@ class MainWindow(QMainWindow):
         self.loaddata_select_column()
         self.loaddata_included()
         # add to cbb create column
+
         if len(nameColumnList) > 0:
             self.view_create_ui.cbbCreateColumn.addItem("")
         self.view_create_ui.cbbCreateColumn.addItems(nameColumnList)
@@ -1265,7 +1277,7 @@ class MainWindow(QMainWindow):
         self.view_create_ui.cbbFilterCal.setCurrentText(
             calUpdate.get_name_show()
         )
-        self.calCur = calUpdate
+        self.calCur = copy.deepcopy(calUpdate)
         self.calCur.set_update(True)
         self.enable_filter_cal()
 
@@ -1514,7 +1526,7 @@ class MainWindow(QMainWindow):
                 self.view_create_ui.leViewName.setText("")
 
     def click_btn_view_new(self):
-        self.viewCurrent = ModuleViews.Views(self.connect, self.users)
+        self.viewCurrent = ModuleViews.Views(self.connects, self.users)
         self.view_create_ui.cbbViewDataSet.setCurrentIndex(0)
 
     def click_btn_view_update(self):
@@ -1630,7 +1642,7 @@ class MainWindow(QMainWindow):
 
     def click_btn_run(self):
         try:
-            view = ModuleViews.Views(self.connect, self.users)
+            view = ModuleViews.Views(self.connects, self.users)
             self.dataBasic.run(
                 view.run_sql(self.viewRun.viewNo, self.dataBasic)
             )
@@ -1664,14 +1676,15 @@ class MainWindow(QMainWindow):
                     filter=file_filter,
                     selectedFilter="Excel File (*.xlsx)",
                 )
-                self.dataBasic.exportToFile(response)
-                self.show_message(
-                    1,
-                    "Export Data",
-                    "Export Data Successfull. Link: {0}".format(
-                        str(response[0])
-                    ),
-                )
+                if len(response[0]) > 0:
+                    self.dataBasic.exportToFile(response)
+                    self.show_message(
+                        1,
+                        "Export Data",
+                        "Export Data Successfull. Link: {0}".format(
+                            str(response[0])
+                        ),
+                    )
             else:
                 self.show_message(
                     2,
@@ -1764,7 +1777,7 @@ class MainWindow(QMainWindow):
                 ),
             )
             if self.messageBoxButton == QMessageBox.StandardButton.Ok:
-                viewRelease = ModuleViews.Views(self.connect, self.users)
+                viewRelease = ModuleViews.Views(self.connects, self.users)
                 viewRelease.set_view_release(self.viewAction)
                 viewRelease.release(self.dataBasic)
                 self.dataBasic.loaddata_view_release()
@@ -1828,7 +1841,7 @@ class MainWindow(QMainWindow):
         self.enable_menu_by_index(5)
         try:
             self.dataBasic.initdata_create_user()
-            self.userNew = ModuleUsers.Users(self.connect)
+            self.userNew = ModuleUsers.Users(self.connects)
             self.loaddata_user_create()
         except Exception as e:
             self.show_message(
@@ -1987,8 +2000,431 @@ class MainWindow(QMainWindow):
         self.system_create_user_ui.lePassword.setEnabled(True)
 
     def click_btn_user_new(self):
-        self.userNew = ModuleUsers.Users(self.connect)
+        self.userNew = ModuleUsers.Users(self.connects)
         self.loaddata_user_create()
+
+    ###################     CREATE VIEW MANUAL #######################
+    def menu_view_create_manual(self):
+        self.refresh_var_global()
+        self.view_manual_ui = Ui_CreateManual()
+        self.view_manual_widgets = QWidget()
+        self.view_manual_ui.setupUi(self.view_manual_widgets)
+        self.ui.scrollArea.setWidget(self.view_manual_widgets)
+        self.enable_menu_by_index(6)
+        try:
+            self.viewManual = ModuleViewManuals.ViewManuals(
+                self.connects, self.users
+            )
+            self.loaddata_create_manual()
+
+            # define event
+            self.view_manual_ui.btnTest.clicked.connect(
+                self.click_btn_manual_test
+            )
+            self.view_manual_ui.btnCreate.clicked.connect(
+                self.click_btn_manual_create
+            )
+            self.view_manual_ui.btnUpdate.clicked.connect(
+                self.click_btn_manual_update
+            )
+            self.view_manual_ui.btnRun.clicked.connect(
+                self.click_btn_manual_run
+            )
+            self.view_manual_ui.btnRelease.clicked.connect(
+                self.click_btn_manual_release
+            )
+            self.view_manual_ui.btnDelete.clicked.connect(
+                self.click_btn_manual_delete
+            )
+            self.view_manual_ui.btnNew.clicked.connect(
+                self.click_btn_manual_new
+            )
+            self.view_manual_ui.btnSearch.clicked.connect(
+                self.click_btn_manual_search
+            )
+            self.view_manual_ui.leViewName.editingFinished.connect(
+                self.edit_le_manual_view_name
+            )
+
+        except Exception as e:
+            self.show_message(
+                3,
+                "Load data Dept Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    def loaddata_create_manual(self):
+        self.view_manual_ui.pltSql.setPlainText(
+            self.viewManual.get_sql_string()
+        )
+        self.view_manual_ui.leViewName.setText(self.viewManual.viewName)
+        self.view_manual_ui.leStatusView.setText(
+            self.viewManual.get_str_status()
+        )
+        self.view_manual_ui.leStatusRelease.setText(
+            self.viewManual.get_str_release()
+        )
+        self.view_manual_ui.leStatusDatabase.setText(
+            self.viewManual.get_str_indb()
+        )
+
+        self.view_manual_ui.btnTest.setEnabled(True)
+        self.view_manual_ui.btnSearch.setEnabled(not self.viewManual.isUpdate)
+        self.view_manual_ui.btnCreate.setEnabled(not self.viewManual.isUpdate)
+        self.view_manual_ui.btnUpdate.setEnabled(self.viewManual.isUpdate)
+        self.view_manual_ui.btnDelete.setEnabled(self.viewManual.isUpdate)
+        self.view_manual_ui.btnRelease.setEnabled(
+            not self.viewManual.releaseStatus and self.viewManual.isUpdate
+        )
+        self.view_manual_ui.btnRun.setEnabled(True)
+        self.view_manual_ui.btnNew.setEnabled(True)
+        self.view_manual_ui.leViewName.setEnabled(not self.viewManual.isUpdate)
+        self.view_manual_ui.leStatusView.setEnabled(False)
+        self.view_manual_ui.leStatusRelease.setEnabled(False)
+        self.view_manual_ui.leStatusDatabase.setEnabled(False)
+
+    def click_btn_manual_test(self):
+        sqlManual = self.view_manual_ui.pltSql.toPlainText()
+        if sqlManual.strip() != "":
+            try:
+                self.viewManual.sql_run_test(sqlManual)
+                self.show_message(
+                    1,
+                    "Run Test SQL",
+                    "Test SQL Successfull !",
+                )
+            except Exception as e:
+                self.show_message(
+                    3,
+                    "Run Test SQL Error",
+                    str(e.__class__.__name__),
+                    str(e),
+                )
+        else:
+            self.show_message(
+                2,
+                "SQL sentence",
+                "Please input SQL",
+            )
+
+    def click_btn_manual_create(self):
+        viewName = self.view_manual_ui.leViewName.text()
+        sqlString = self.view_manual_ui.pltSql.toPlainText()
+        if viewName.strip() != "" and sqlString.strip() != "":
+            try:
+                self.viewManual.set_view_name(viewName)
+                self.viewManual.set_sql_string(sqlString)
+                viewNo = self.viewManual.create()
+                self.show_message(
+                    1,
+                    "Create View Manual",
+                    "Create View Successfull. View Manual No: {0} ".format(
+                        viewNo
+                    ),
+                )
+                self.viewManual = ModuleViewManuals.ViewManuals(
+                    self.connects, self.users
+                )
+                self.loaddata_create_manual()
+            except Exception as e:
+                self.show_message(
+                    3,
+                    "Create View Manual Error",
+                    str(e.__class__.__name__),
+                    str(e),
+                )
+
+    def click_btn_manual_update(self):
+        sqlString = self.view_manual_ui.pltSql.toPlainText()
+        if sqlString.strip() != "":
+            try:
+                self.viewManual.set_sql_string(sqlString)
+                self.viewManual.update()
+                self.show_message(
+                    1,
+                    "Update View Manual",
+                    "Update View Manual Successfull !")
+                self.view_manual_ui.btnRelease.setEnabled(
+            not self.viewManual.releaseStatus and self.viewManual.isUpdate
+        )
+            except Exception as e:
+                self.show_message(
+                    3,
+                    "Update View Manual Error",
+                    str(e.__class__.__name__),
+                    str(e),
+                )
+
+    def click_btn_manual_run(self):
+        sqlManual = self.view_manual_ui.pltSql.toPlainText()
+        self.dataResult = pd.DataFrame()
+        if sqlManual.strip() != "":
+            try:
+                self.dataResult = self.viewManual.sql_run(sqlManual)
+                self.load_frm_result()
+            except Exception as e:
+                self.show_message(
+                    3,
+                    "Run SQL Error",
+                    str(e.__class__.__name__),
+                    str(e),
+                )
+        else:
+            self.show_message(
+                2,
+                "SQL sentence",
+                "Please input SQL",
+            )
+
+    def load_frm_result(self):
+        self.run_result_ui = Ui_ShowResult()
+        self.run_result_widgets = QDialog()
+        self.run_result_ui.setupUi(self.run_result_widgets)
+        try:
+            self.loaddata_result()
+            self.run_result_ui.btnExport.clicked.connect(
+                self.click_btn_result_export
+            )
+            self.run_result_widgets.exec()
+        except Exception as e:
+            self.show_message(
+                3, "Load Result Error", str(e.__class__.__name__), str(e)
+            )
+
+    def loaddata_result(self):
+        model = TableViewModel.TableViewModel(self.dataResult)
+        self.run_result_ui.tbwResult.setModel(model)
+        self.run_result_ui.tbwResult.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.run_result_ui.tbwResult.resizeColumnsToContents()
+        self.run_result_ui.tbwResult.resizeRowsToContents()
+        self.run_result_ui.tbwResult.setSortingEnabled(True)
+        self.run_result_ui.leColumn.setText(str(len(self.dataResult.columns)))
+        self.run_result_ui.leRow.setText(str(len(self.dataResult)))
+
+    def click_btn_result_export(self):
+        try:
+            if len(self.dataResult) > 0:
+                file_filter = "Excel File (*.xlsx);; Data File (*.csv)"
+                response = QFileDialog.getSaveFileName(
+                    parent=self,
+                    caption="Save to file",
+                    filter=file_filter,
+                    selectedFilter="Excel File (*.xlsx)",
+                )
+                if len(response[0]) > 0:
+                    self.dataBasic.exportToFileData(self.dataResult, response)
+                    self.show_message(
+                        1,
+                        "Export Data",
+                        "Export Data Successfull. Link: {0}".format(
+                            str(response[0])
+                        ),
+                    )
+            else:
+                self.show_message(
+                    2,
+                    "Export Data",
+                    "Not Found Data",
+                )
+        except Exception as e:
+            self.show_message(
+                3,
+                "Export Data Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    def click_btn_manual_release(self):
+        try:
+            self.viewManual.release()
+            self.viewManual = ModuleViewManuals.ViewManuals(
+                    self.connects, self.users
+                )
+            self.show_message(
+                    1,
+                    "Release View Manual",
+                    "Release View Manual Successfull !")
+            self.loaddata_create_manual()
+        except Exception as e:
+                self.show_message(
+                    3,
+                    "Release View Manual Error",
+                    str(e.__class__.__name__),
+                    str(e),
+                )
+
+    def click_btn_manual_delete(self):
+        try:
+            self.viewManual.delete()
+            self.viewManual = ModuleViewManuals.ViewManuals(
+                    self.connects, self.users
+                )
+            self.show_message(
+                    1,
+                    "Delete View Manual",
+                    "Delete View Manual Successfull !")
+            self.loaddata_create_manual()
+        except Exception as e:
+                self.show_message(
+                    3,
+                    "Delete View Manual Error",
+                    str(e.__class__.__name__),
+                    str(e),
+                )
+
+    def click_btn_manual_new(self):
+        self.viewManual = ModuleViewManuals.ViewManuals(
+            self.connects, self.users
+        )
+        self.loaddata_create_manual()
+
+    def click_btn_manual_search(self):
+        nameNew = self.view_manual_ui.leViewName.text()
+        if nameNew.strip() != "":
+            try:
+                dataView = self.dataBasic.get_view_manual_by_search(nameNew)
+                self.load_search_manual(dataView)
+            except Exception as e:
+                self.show_message(
+                    3,
+                    "Search View Error",
+                    str(e.__class__.__name__),
+                    str(e),
+                )
+
+    def load_search_manual(self, data):
+        self.search_view_manual_ui = Ui_DialogSearch()
+        self.search_view_manual_widgets = QDialog()
+        self.search_view_manual_ui.setupUi(self.search_view_manual_widgets)
+        self.search_view_manual_ui.tbwSearch.itemClicked.connect(
+            self.itemclick_tbw_search_manual
+        )
+        self.search_view_manual_ui.buttonBox.clicked.connect(
+            self.click_search_manual_button
+        )
+        self.search_view_manual_ui.tbwSearch.itemDoubleClicked.connect(
+            self.double_itemclick_search_manual
+        )
+        self.loaddate_search_manual(data)
+        self.search_view_manual_widgets.exec()
+
+    def loaddate_search_manual(self, data):
+        self.search_view_manual_ui.tbwSearch.clear()
+        if len(data) > 0:
+            self.search_view_manual_ui.tbwSearch.setColumnCount(1)
+            hItem0 = QTableWidgetItem("View Name")
+            hItem0.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.search_view_manual_ui.tbwSearch.setHorizontalHeaderItem(
+                0, hItem0
+            )
+            rows = len(data)
+            self.search_view_manual_ui.tbwSearch.setRowCount(rows)
+            for row in range(0, rows):
+                rItem0 = QTableWidgetItem(str(data.loc[row].iloc[0]))
+                self.search_view_manual_ui.tbwSearch.setItem(row, 0, rItem0)
+            self.search_view_manual_ui.tbwSearch.setEditTriggers(
+                QAbstractItemView.NoEditTriggers
+            )
+            self.search_view_manual_ui.tbwSearch.setSelectionBehavior(
+                QAbstractItemView.SelectRows
+            )
+            self.search_view_manual_ui.tbwSearch.horizontalHeader().setSectionResizeMode(
+                0, QHeaderView.ResizeMode.ResizeToContents
+            )
+        self.search_view_manual_ui.cbSeachID.setVisible(False)
+        self.search_view_manual_ui.cbSearchName.setVisible(False)
+        self.search_view_manual_ui.leSearch.setVisible(False)
+        self.search_view_manual_ui.label.setVisible(False)
+
+    def itemclick_tbw_search_manual(self, item):
+        try:
+            row = self.search_view_manual_ui.tbwSearch.row(item)
+            self.updateViewManual = ModuleViewManuals.ViewManuals(
+                self.connects, self.users
+            )
+            self.updateViewManual.set_view_name(
+                self.search_view_manual_ui.tbwSearch.item(row, 0).text()
+            )
+            self.search_view_manual_ui.buttonBox.setEnabled(
+                self.updateViewManual.viewName != str()
+            )
+        except Exception as e:
+            self.show_message(
+                3, "Select View Error", str(e.__class__.__name__), str(e)
+            )
+
+    def click_search_manual_button(self, button):
+        if (
+            self.search_view_manual_ui.buttonBox.buttonRole(button)
+            == QDialogButtonBox.ButtonRole.AcceptRole
+        ):
+            self.search_view_manual_widgets.accept()
+            self.loaddata_view_manual_update()
+        else:
+            self.search_view_manual_widgets.reject()
+
+    def double_itemclick_search_manual(self):
+        self.search_view_manual_widgets.accept()
+        self.loaddata_view_manual_update()
+
+    def loaddata_view_manual_update(self):
+        try:
+            self.updateViewManual.loadData(
+                self.dataBasic.loaddata_view_manual(
+                    self.updateViewManual.viewName
+                )
+            )
+            self.viewManual = copy.deepcopy(self.updateViewManual)
+            self.viewManual.set_update(True)
+            self.loaddata_create_manual()
+            self.updateViewManual = ModuleViewManuals.ViewManuals(
+                self.connects, self.users
+            )
+        except Exception as e:
+            self.show_message(
+                3,
+                "Load info View Manual Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    def edit_le_manual_view_name(self):
+        nameNew = self.view_manual_ui.leViewName.text()
+        isCheck = True
+        if nameNew.strip() != "":
+            if nameNew.find(" ") >= 0:
+                isCheck = False
+                self.show_message(
+                    3,
+                    "Check Name View",
+                    "Name of column contain space character",
+                )
+            if isCheck and not nameNew.replace("_", "").isascii():
+                isCheck = False
+                self.show_message(
+                    3,
+                    "Check Name View",
+                    "Name of column contain special character (not in ASCII)",
+                )
+                """
+            if isCheck and not nameNew.replace("_", "").isalnum():
+                isCheck = False
+                self.show_message(
+                    3,
+                    "Check Name View",
+                    "Name of column contain special character (not in ALPHA)",
+                )"""
+            if isCheck and self.dataBasic.check_view_name(nameNew):
+                isCheck = False
+                self.show_message(
+                    3, "Check Name View", "Name of View is exist."
+                )
+
+            if not isCheck:
+                self.view_manual_ui.leViewName.setText("")
 
 
 if __name__ == "__main__":

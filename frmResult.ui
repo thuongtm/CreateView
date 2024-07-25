@@ -1,20 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>ShowResult</class>
+ <widget class="QDialog" name="ShowResult">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1204</width>
-    <height>677</height>
+    <width>1170</width>
+    <height>570</height>
    </rect>
-  </property>
-  <property name="minimumSize">
-   <size>
-    <width>1204</width>
-    <height>677</height>
-   </size>
   </property>
   <property name="palette">
    <palette>
@@ -486,186 +480,169 @@
    </palette>
   </property>
   <property name="windowTitle">
-   <string>Create View</string>
+   <string>Show Result</string>
   </property>
   <property name="windowIcon">
    <iconset resource="images.qrc">
-    <normaloff>:/images/images/new-file.png</normaloff>:/images/images/new-file.png</iconset>
+    <normaloff>:/images/images/next.png</normaloff>:/images/images/next.png</iconset>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <property name="spacing">
-     <number>10</number>
-    </property>
-    <property name="leftMargin">
-     <number>10</number>
-    </property>
-    <property name="topMargin">
-     <number>10</number>
-    </property>
-    <property name="rightMargin">
-     <number>10</number>
-    </property>
-    <property name="bottomMargin">
-     <number>10</number>
-    </property>
-    <item>
-     <widget class="QScrollArea" name="scrollArea">
-      <property name="widgetResizable">
-       <bool>true</bool>
-      </property>
-      <widget class="QWidget" name="scrollAreaWidgetContents">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>1182</width>
-         <height>578</height>
-        </rect>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>15</number>
+   </property>
+   <property name="leftMargin">
+    <number>10</number>
+   </property>
+   <property name="topMargin">
+    <number>10</number>
+   </property>
+   <property name="rightMargin">
+    <number>10</number>
+   </property>
+   <property name="bottomMargin">
+    <number>10</number>
+   </property>
+   <item>
+    <widget class="QTableView" name="tbwResult">
+     <property name="styleSheet">
+      <string notr="true">QHeaderView::section:checked{
+	background-color: rgb(225, 225, 225);
+}
+QHeaderView::section { 
+	background-color:  rgb(225, 225, 225);
+	color: rgb(85, 0, 0);
+ 	padding-left: 4px;
+ 	border: 0.5px solid rgb(225, 225, 225); }
+
+QTableView::item {
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-right: 10px;
+	padding-left: 10px;
+}</string>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::EditKeyPressed</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <item>
+      <layout class="QFormLayout" name="formLayout_2">
+       <property name="horizontalSpacing">
+        <number>10</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Total column:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="leColumn">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QFormLayout" name="formLayout">
+       <property name="horizontalSpacing">
+        <number>10</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Total row:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="leRow">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnExport">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>100</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>   Export</string>
+       </property>
+       <property name="icon">
+        <iconset resource="images.qrc">
+         <normaloff>:/images/images/export.png</normaloff>:/images/images/export.png</iconset>
        </property>
       </widget>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1204</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuSystem">
-    <property name="title">
-     <string>System</string>
-    </property>
-    <addaction name="actionHome"/>
-    <addaction name="separator"/>
-    <addaction name="actionCreate_User"/>
-    <addaction name="actionChange_Password"/>
-    <addaction name="separator"/>
-    <addaction name="actionLogout"/>
-   </widget>
-   <widget class="QMenu" name="menuAction">
-    <property name="title">
-     <string>Action</string>
-    </property>
-    <addaction name="actionCreate_View"/>
-    <addaction name="actionRun_View"/>
-    <addaction name="actionRelease_View"/>
-    <addaction name="actionSearch"/>
-    <addaction name="actionCreate_View_Manual"/>
-   </widget>
-   <addaction name="menuSystem"/>
-   <addaction name="menuAction"/>
-  </widget>
-  <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionHome"/>
-   <addaction name="separator"/>
-   <addaction name="actionCreate_View"/>
-   <addaction name="separator"/>
-   <addaction name="actionRun_View"/>
-   <addaction name="separator"/>
-   <addaction name="actionRelease_View"/>
-   <addaction name="separator"/>
-   <addaction name="actionSearch"/>
-   <addaction name="separator"/>
-   <addaction name="actionCreate_View_Manual"/>
-   <addaction name="separator"/>
-  </widget>
-  <action name="actionCreate_View">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/add-query.png</normaloff>:/images/images/add-query.png</iconset>
-   </property>
-   <property name="text">
-    <string>Create View</string>
-   </property>
-  </action>
-  <action name="actionRelease_View">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/writing.png</normaloff>:/images/images/writing.png</iconset>
-   </property>
-   <property name="text">
-    <string>Release View</string>
-   </property>
-  </action>
-  <action name="actionRun_View">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/running.png</normaloff>:/images/images/running.png</iconset>
-   </property>
-   <property name="text">
-    <string>Run View</string>
-   </property>
-  </action>
-  <action name="actionLogout">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/logout.png</normaloff>:/images/images/logout.png</iconset>
-   </property>
-   <property name="text">
-    <string>Logout</string>
-   </property>
-  </action>
-  <action name="actionSearch">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/search.png</normaloff>:/images/images/search.png</iconset>
-   </property>
-   <property name="text">
-    <string>Search</string>
-   </property>
-  </action>
-  <action name="actionHome">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/home.png</normaloff>:/images/images/home.png</iconset>
-   </property>
-   <property name="text">
-    <string>Home</string>
-   </property>
-  </action>
-  <action name="actionCreate_User">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/user.png</normaloff>:/images/images/user.png</iconset>
-   </property>
-   <property name="text">
-    <string>Create User</string>
-   </property>
-  </action>
-  <action name="actionChange_Password">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/reset-password.png</normaloff>:/images/images/reset-password.png</iconset>
-   </property>
-   <property name="text">
-    <string>Change Password</string>
-   </property>
-  </action>
-  <action name="actionCreate_View_Manual">
-   <property name="icon">
-    <iconset resource="images.qrc">
-     <normaloff>:/images/images/hammer.png</normaloff>:/images/images/hammer.png</iconset>
-   </property>
-   <property name="text">
-    <string>Create View Manual</string>
-   </property>
-  </action>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <resources>
   <include location="images.qrc"/>
