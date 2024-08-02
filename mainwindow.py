@@ -38,6 +38,7 @@ from ui_frmResult import Ui_ShowResult
 import Connects, ModuleUsers, ModuleDataBasics, ModuleViews, ModuleColumns
 import ModuleSorts, Sentences, ModuleFunctions, ModuleCalculations
 import TableViewModel, ModuleViewAction, ModuleWriteLogs, ModuleViewManuals
+import ModuleMores
 
 
 class MainWindow(QMainWindow):
@@ -147,6 +148,7 @@ class MainWindow(QMainWindow):
         self.calCur = ModuleCalculations.Calculations()
         self.viewAction = ModuleViewAction.ViewAction()
 
+    ################# LOGIN ###############################3
     def visiable_login(self):
         self.ui.menubar.setVisible(self.users.isLogin)
         self.ui.toolBar.setVisible(self.users.isLogin)
@@ -197,6 +199,7 @@ class MainWindow(QMainWindow):
         self.ui.scrollArea.setWidget(QWidget())
         self.enable_menu_by_index(0)
 
+    ########################    SEARCH #########################3
     def menu_view_search(self):
         self.view_search_ui = Ui_DialogSearch()
         self.view_search_widgets = QDialog()
@@ -310,11 +313,6 @@ class MainWindow(QMainWindow):
             self.view_create_ui.cbbViewDataSet.setCurrentText(
                 self.viewCurrent.dataset.datasetName
             )
-            self.view_create_ui.cbbIncludedView.removeItem(
-                self.view_create_ui.cbbIncludedView.findText(
-                    self.viewCurrent.viewName
-                )
-            )
             self.viewUpdate = ModuleViews.Views(self.connects, self.users)
         except Exception as e:
             self.show_message(
@@ -322,6 +320,7 @@ class MainWindow(QMainWindow):
             )
             self.menu_view_home()
 
+    ########################        CREATE QUERY ###################33
     def menu_view_create(self):
         self.refresh_var_global()
         self.view_create_ui = Ui_frmCreateView()
@@ -353,8 +352,9 @@ class MainWindow(QMainWindow):
             self.click_btn_tab_filter
         )
         self.view_create_ui.btnTabSort.clicked.connect(self.click_btn_tab_sort)
-        self.view_create_ui.btnTabIncluded.clicked.connect(
-            self.click_btn_tab_included
+        self.view_create_ui.btnTabMore.clicked.connect(self.click_btn_tab_more)
+        self.view_create_ui.btnTabColumnPlus.clicked.connect(
+            self.click_btn_tab_column_plus
         )
         self.view_create_ui.btnTabSql.clicked.connect(self.click_btn_tab_sql)
         self.view_create_ui.cbbViewDataSet.currentIndexChanged.connect(
@@ -418,6 +418,8 @@ class MainWindow(QMainWindow):
             self.itemdoubleclick_columnnew
         )
 
+        # event new column plus
+
         # event filter
         self.view_create_ui.cbbFilterColumn.currentIndexChanged.connect(
             self.change_cbb_filter_column
@@ -437,15 +439,20 @@ class MainWindow(QMainWindow):
         self.view_create_ui.tbwFilter.itemDoubleClicked.connect(
             self.itemdoubleclick_filter
         )
-        # included
-        self.view_create_ui.cbbIncludedView.currentIndexChanged.connect(
-            self.change_cbb_included_view
+
+        # event More
+        self.view_create_ui.cbbMoreType.currentIndexChanged.connect(
+            self.change_cbb_more_type
         )
-        self.view_create_ui.btnIncludedSave.clicked.connect(
-            self.click_btn_included_save
+        self.view_create_ui.cbbMoreView.currentIndexChanged.connect(
+            self.change_cbb_more_view
         )
-        self.view_create_ui.btnIncludedRemove.clicked.connect(
-            self.click_btn_included_delete
+        self.view_create_ui.btnMoreAdd.clicked.connect(self.click_btn_more_add)
+        self.view_create_ui.btnMoreUpdate.clicked.connect(
+            self.click_btn_more_update
+        )
+        self.view_create_ui.tbwMore.itemDoubleClicked.connect(
+            self.click_item_more_tbw
         )
 
         # header
@@ -541,9 +548,7 @@ class MainWindow(QMainWindow):
         nameColumnList = self.viewCurrent.get_name_column_dataset()
         # add to select column
         self.loaddata_select_column()
-        self.loaddata_included()
         # add to cbb create column
-
         if len(nameColumnList) > 0:
             self.view_create_ui.cbbCreateColumn.addItem("")
         self.view_create_ui.cbbCreateColumn.addItems(nameColumnList)
@@ -558,15 +563,8 @@ class MainWindow(QMainWindow):
             self.view_create_ui.cbbSortColumn.addItem("")
         self.view_create_ui.cbbSortColumn.addItems(nameColumnList)
         self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
-
-    def loaddate_view_to_cbb(self):
-        self.view_create_ui.cbbIncludedType.clear()
-        # add to cbb list view included
-        if len(self.dataBasic.nameView) > 0:
-            self.view_create_ui.cbbIncludedType.setCurrentIndex(0)
-        # set type included
-        self.view_create_ui.cbbIncludedType.addItems(["In", "Not in"])
-        self.view_create_ui.cbbIncludedType.setCurrentIndex(0)
+        # load more view
+        self.loaddata_more()
 
     def loaddata_select_column(self):
         self.view_create_ui.lvSelectColumnAll.clear()
@@ -1316,53 +1314,207 @@ class MainWindow(QMainWindow):
                 3, "Delete Colum New Error", str(e.__class__.__name__), str(e)
             )
 
-    ###############     INCLUDED    ##############
-    def loaddata_included(self):
-        self.view_create_ui.cbbIncludedType.clear()
-        # set type included
-        self.view_create_ui.cbbIncludedType.addItems(["in", "not in"])
-        self.view_create_ui.cbbIncludedType.setCurrentIndex(0)
-        self.view_create_ui.cbbIncludedType.setEnabled(True)
-        self.loaddata_cbb_included_viewname()
-        self.view_create_ui.leIncludedTypeCur.setText(
-            self.viewCurrent.includedType
+    ###############     MORE    ##############
+    def loaddata_more(self):
+        self.view_create_ui.cbbMoreType.clear()
+        self.view_create_ui.cbbMoreType.addItems(["", "Included", "Excluded"])
+        self.view_create_ui.cbbMoreType.setCurrentIndex(0)
+        self.view_create_ui.cbbMoreType.setEnabled(True)
+        self.loaddata_tbw_more()
+
+    def loaddata_tbw_more(self):
+        hearderTitle = self.sentence.header_table_more()
+        self.view_create_ui.tbwMore.clear()
+        self.view_create_ui.tbwMore.setColumnCount(len(hearderTitle))
+        listMore = copy.deepcopy(self.viewCurrent.moreSelected)
+        self.view_create_ui.tbwMore.setRowCount(len(listMore))
+        # add header
+        for i in range(0, len(hearderTitle)):
+            hItem = QTableWidgetItem(hearderTitle[i])
+            hItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.view_create_ui.tbwMore.setHorizontalHeaderItem(i, hItem)
+        # add row
+        if len(listMore) > 0:
+            row = 0
+            for rowItem in listMore:
+                rItem0 = QPushButton("   Delete")
+                rItem0.clicked.connect(self.click_btn_more_delete)
+                rItem0.setMinimumSize(QSize(80, 24))
+                rItem0.setMaximumSize(QSize(80, 24))
+                icon = QIcon()
+                icon.addFile(
+                    ":/images/images/minus.png",
+                    QSize(),
+                    QIcon.Normal,
+                    QIcon.Off,
+                )
+                rItem0.setIcon(icon)
+                rItem1 = QTableWidgetItem(rowItem.viewConnect)
+                rItem2 = QTableWidgetItem(rowItem.typeMore)
+                rItem3 = QTableWidgetItem(rowItem.columnConnect)
+                self.view_create_ui.tbwMore.setCellWidget(row, 0, rItem0)
+                self.view_create_ui.tbwMore.setItem(row, 1, rItem1)
+                self.view_create_ui.tbwMore.setItem(row, 2, rItem2)
+                self.view_create_ui.tbwMore.setItem(row, 3, rItem3)
+                self.view_create_ui.tbwMore.cellWidget(
+                    row, 0
+                ).setContentsMargins(10, 3, 10, 3)
+                row += 1
+            self.view_create_ui.tbwMore.setColumnWidth(0, 100)
+            self.view_create_ui.tbwMore.horizontalHeader().setSectionResizeMode(
+                1, QHeaderView.ResizeMode.ResizeToContents
+            )
+            self.view_create_ui.tbwMore.horizontalHeader().setSectionResizeMode(
+                2, QHeaderView.ResizeMode.ResizeToContents
+            )
+            self.view_create_ui.tbwMore.horizontalHeader().setSectionResizeMode(
+                3, QHeaderView.ResizeMode.ResizeToContents
+            )
+
+    def change_cbb_more_type(self):
+        typeMore = self.view_create_ui.cbbMoreType.currentText()
+        self.moreViewCurrent = ModuleMores.Mores()
+        if typeMore.strip() != "":
+            self.loaddata_cbb_view()
+            self.moreViewCurrent.set_type(typeMore)
+        else:
+            self.view_create_ui.cbbMoreView.clear()
+        self.view_create_ui.cbbMoreView.setCurrentIndex(0)
+        self.view_create_ui.cbbMoreView.setEnabled(
+            typeMore.strip() != "" and not self.moreViewCurrent.isUpdate
         )
-        self.view_create_ui.leIncludedViewCur.setText(
-            self.viewCurrent.includedView
+        self.view_create_ui.cbbMoreColumn.setVisible(
+            self.moreViewCurrent.get_int_type() == 1
         )
-        self.view_create_ui.btnIncludedRemove.setEnabled(
-            self.viewCurrent.includedView != ""
+        self.view_create_ui.label_13.setVisible(
+            self.moreViewCurrent.get_int_type() == 1
         )
 
-    def loaddata_cbb_included_viewname(self):
-        self.view_create_ui.cbbIncludedView.clear()
-
-        listView = [
-            x
-            for x in self.dataBasic.includedViewName
-            if x != self.viewCurrent.includedView
+    def loaddata_cbb_view(self):
+        listView = copy.deepcopy(self.dataBasic.moreView)
+        listView2 = [
+            x for x in listView if x not in self.viewCurrent.get_view_in_more()
         ]
-        if len(listView) > 0:
-            self.view_create_ui.cbbIncludedView.addItem("")
-            self.view_create_ui.cbbIncludedView.addItems(listView)
-            self.view_create_ui.cbbIncludedView.setCurrentIndex(0)
-        self.view_create_ui.cbbIncludedView.setEnabled(len(listView) > 0)
+        self.view_create_ui.cbbMoreView.clear()
+        if len(listView2) > 0:
+            self.view_create_ui.cbbMoreView.addItem("")
+            self.view_create_ui.cbbMoreView.addItems(listView2)
+            self.view_create_ui.cbbMoreView.setCurrentIndex(0)
 
-    def change_cbb_included_view(self):
-        viewName = self.view_create_ui.cbbIncludedView.currentText()
-        self.view_create_ui.btnIncludedSave.setEnabled(viewName != "")
+    def change_cbb_more_view(self):
+        nameView = self.view_create_ui.cbbMoreView.currentText()
+        self.view_create_ui.cbbMoreColumn.clear()
+        if nameView.strip() != "":
+            if self.moreViewCurrent.get_int_type() == 1:
+                self.loaddata_column_of_view()
+        
+        self.view_create_ui.btnMoreAdd.setEnabled(
+            nameView.strip() != "" and not self.moreViewCurrent.isUpdate
+        )
+        self.view_create_ui.btnMoreUpdate.setEnabled(
+            nameView.strip() != "" and self.moreViewCurrent.isUpdate
+        )
 
-    def click_btn_included_save(self):
-        includedType = self.view_create_ui.cbbIncludedType.currentText()
-        includedView = self.view_create_ui.cbbIncludedView.currentText()
-        self.viewCurrent.set_included(includedType, includedView)
-        self.loaddata_included()
-        self.update_sql_sentence()
+    def loaddata_column_of_view(self):
+        try:
+            listColumn = self.viewCurrent.get_list_column_name_select()
+            self.view_create_ui.cbbMoreColumn.clear()
+            if len(listColumn) > 0:
+                self.view_create_ui.cbbMoreColumn.addItem("")
+                self.view_create_ui.cbbMoreColumn.addItems(listColumn)
+            self.view_create_ui.cbbMoreColumn.setEnabled(len(listColumn) > 0)
+        except Exception as e:
+            self.show_message(
+                3,
+                "Load Column of View Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
 
-    def click_btn_included_delete(self):
-        self.viewCurrent.set_included(str(), str())
-        self.loaddata_included()
-        self.update_sql_sentence()
+    def click_btn_more_add(self):
+        viewName = self.view_create_ui.cbbMoreView.currentText()
+        columnName = self.view_create_ui.cbbMoreColumn.currentText()
+        try:
+            self.moreViewCurrent.set_view(viewName, columnName)
+            self.viewCurrent.add_more(self.moreViewCurrent)
+            self.loaddata_more()
+            self.update_sql_sentence()
+        except Exception as e:
+            self.show_message(
+                3,
+                "Add More Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    def click_btn_more_update(self):
+        viewName = self.view_create_ui.cbbMoreView.currentText()
+        columnName = self.view_create_ui.cbbMoreColumn.currentText()
+        try:
+            self.moreViewCurrent.set_view(viewName, columnName)
+            self.viewCurrent.update_more(self.moreViewCurrent)
+            self.loaddata_more()
+            self.update_sql_sentence()
+            self.show_message(1, "Update More", "Update More Successful !")
+        except Exception as e:
+            self.show_message(
+                3,
+                "Update More Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    def click_btn_more_delete(self):
+        try:
+            btnDelete = self.sender()
+            index = self.view_create_ui.tbwMore.indexAt(btnDelete.pos())
+            if index.isValid():
+                self.show_message(
+                    0,
+                    "Delete More",
+                    "Do you want More ?",
+                )
+                if self.messageBoxButton == QMessageBox.StandardButton.Ok:
+                    viewConnect = self.view_create_ui.tbwMore.item(
+                        index.row(), 1
+                    ).text()
+                    typeConnect = self.view_create_ui.tbwMore.item(
+                        index.row(), 2
+                    ).text()
+                    self.viewCurrent.delete_more(viewConnect, typeConnect)
+                    self.moreViewCurrent = ModuleMores.Mores()
+                    self.loaddata_more()
+                    self.update_sql_sentence()
+        except Exception as e:
+            self.show_message(
+                3, "Delete Colum New Error", str(e.__class__.__name__), str(e)
+            )
+
+    def click_item_more_tbw(self, item):
+        try:
+            rowIndex = self.view_create_ui.tbwMore.row(item)
+            viewName = self.view_create_ui.tbwMore.item(rowIndex, 1).text()
+            typeConnect = self.view_create_ui.tbwMore.item(rowIndex, 2).text()
+            moreUpdate = self.viewCurrent.get_more_selected(
+                viewName, typeConnect
+            )
+            self.view_create_ui.cbbMoreType.setCurrentText(typeConnect)
+            self.view_create_ui.cbbMoreType.setEnabled(False)
+            self.moreViewCurrent = moreUpdate
+            self.moreViewCurrent.set_update(True)
+            self.view_create_ui.cbbMoreView.addItem(viewName)
+            self.view_create_ui.cbbMoreView.setCurrentText(viewName)
+            self.view_create_ui.cbbMoreView.setEnabled(False)
+            self.view_create_ui.cbbMoreColumn.setCurrentText(
+                self.moreViewCurrent.columnConnect
+            )
+        except Exception as e:
+            self.show_message(
+                3,
+                "Load Item More Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
 
     ####################    HEADER #########################
     def change_cb_distinct(self):
@@ -1416,7 +1568,7 @@ class MainWindow(QMainWindow):
                         ),
                     )
                     self.dataBasic.loaddata_view_name_all()
-                    self.dataBasic.loaddata_view_name_included()
+                    self.dataBasic.loaddata_more()
                     self.view_create_ui.cbbViewDataSet.setCurrentIndex(0)
                 except Exception as e:
                     self.show_message(
@@ -1475,7 +1627,7 @@ class MainWindow(QMainWindow):
             if self.messageBoxButton == QMessageBox.StandardButton.Ok:
                 self.viewCurrent.delete()
                 self.dataBasic.loaddata_view_name_all()
-                self.dataBasic.loaddata_view_name_included()
+                self.dataBasic.loaddata_more()
                 self.view_create_ui.cbbViewDataSet.setCurrentIndex(0)
                 self.show_message(
                     1,
@@ -1538,7 +1690,6 @@ class MainWindow(QMainWindow):
                 "Update View successfull !",
             )
             self.dataBasic.loaddata_view_name_all()
-            self.dataBasic.loaddata_view_name_included()
             self.view_create_ui.cbbViewDataSet.setCurrentIndex(0)
         except Exception as e:
             self.show_message(
@@ -1556,29 +1707,35 @@ class MainWindow(QMainWindow):
         self.view_create_ui.stackedWidget.setCurrentIndex(1)
         self.change_tab_view_create(1)
 
-    def click_btn_tab_filter(self):
+    def click_btn_tab_column_plus(self):
         self.view_create_ui.stackedWidget.setCurrentIndex(2)
         self.change_tab_view_create(2)
 
-    def click_btn_tab_sort(self):
+    def click_btn_tab_filter(self):
         self.view_create_ui.stackedWidget.setCurrentIndex(3)
         self.change_tab_view_create(3)
 
-    def click_btn_tab_included(self):
+    def click_btn_tab_sort(self):
         self.view_create_ui.stackedWidget.setCurrentIndex(4)
         self.change_tab_view_create(4)
 
-    def click_btn_tab_sql(self):
+    def click_btn_tab_more(self):
         self.view_create_ui.stackedWidget.setCurrentIndex(5)
         self.change_tab_view_create(5)
+
+    def click_btn_tab_sql(self):
+        self.view_create_ui.stackedWidget.setCurrentIndex(6)
+        self.change_tab_view_create(6)
 
     def change_tab_view_create(self, index):
         self.view_create_ui.btnTabSelectColumn.setEnabled(index != 0)
         self.view_create_ui.btnTabCreateColumn.setEnabled(index != 1)
-        self.view_create_ui.btnTabFilter.setEnabled(index != 2)
-        self.view_create_ui.btnTabSort.setEnabled(index != 3)
-        self.view_create_ui.btnTabIncluded.setEnabled(index != 4)
-        self.view_create_ui.btnTabSql.setEnabled(index != 5)
+        self.view_create_ui.btnTabColumnPlus.setEnabled(index != 2)
+        self.view_create_ui.btnTabColumnPlus.setEnabled(False)
+        self.view_create_ui.btnTabFilter.setEnabled(index != 3)
+        self.view_create_ui.btnTabSort.setEnabled(index != 4)
+        self.view_create_ui.btnTabMore.setEnabled(index != 5)
+        self.view_create_ui.btnTabSql.setEnabled(index != 6)
 
     def menu_view_run(self):
         self.refresh_var_global()
@@ -2142,12 +2299,12 @@ class MainWindow(QMainWindow):
                 self.viewManual.set_sql_string(sqlString)
                 self.viewManual.update()
                 self.show_message(
-                    1,
-                    "Update View Manual",
-                    "Update View Manual Successfull !")
+                    1, "Update View Manual", "Update View Manual Successfull !"
+                )
                 self.view_manual_ui.btnRelease.setEnabled(
-            not self.viewManual.releaseStatus and self.viewManual.isUpdate
-        )
+                    not self.viewManual.releaseStatus
+                    and self.viewManual.isUpdate
+                )
             except Exception as e:
                 self.show_message(
                     3,
@@ -2241,39 +2398,37 @@ class MainWindow(QMainWindow):
         try:
             self.viewManual.release()
             self.viewManual = ModuleViewManuals.ViewManuals(
-                    self.connects, self.users
-                )
+                self.connects, self.users
+            )
             self.show_message(
-                    1,
-                    "Release View Manual",
-                    "Release View Manual Successfull !")
+                1, "Release View Manual", "Release View Manual Successfull !"
+            )
             self.loaddata_create_manual()
         except Exception as e:
-                self.show_message(
-                    3,
-                    "Release View Manual Error",
-                    str(e.__class__.__name__),
-                    str(e),
-                )
+            self.show_message(
+                3,
+                "Release View Manual Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
 
     def click_btn_manual_delete(self):
         try:
             self.viewManual.delete()
             self.viewManual = ModuleViewManuals.ViewManuals(
-                    self.connects, self.users
-                )
+                self.connects, self.users
+            )
             self.show_message(
-                    1,
-                    "Delete View Manual",
-                    "Delete View Manual Successfull !")
+                1, "Delete View Manual", "Delete View Manual Successfull !"
+            )
             self.loaddata_create_manual()
         except Exception as e:
-                self.show_message(
-                    3,
-                    "Delete View Manual Error",
-                    str(e.__class__.__name__),
-                    str(e),
-                )
+            self.show_message(
+                3,
+                "Delete View Manual Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
 
     def click_btn_manual_new(self):
         self.viewManual = ModuleViewManuals.ViewManuals(

@@ -211,6 +211,24 @@ class Connects:
             cursors.close()
             connection.close()
 
+    def insert_view_line_more(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc(
+                "t_proc_view_more_insert",
+                parameters=parameter,
+            )
+        except:
+            raise
+        finally:
+            cursors.close()
+            connection.close()
+
     def update_header_view(self, parameter):
         try:
             connection = oracledb.connect(
@@ -293,6 +311,24 @@ class Connects:
             cursors = connection.cursor()
             cursors.callproc(
                 "t_proc_view_filter_update",
+                parameters=parameter,
+            )
+        except:
+            raise
+        finally:
+            cursors.close()
+            connection.close()
+
+    def update_view_line_more(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc(
+                "t_proc_view_more_update",
                 parameters=parameter,
             )
         except:

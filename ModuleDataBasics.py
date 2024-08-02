@@ -19,7 +19,7 @@ class DataBasics:
         self.actionViewList = []
         self.runViewList = []
         self.dataRun = pd.DataFrame()
-        self.includedViewName = []
+        self.moreView = []
         self.viewNameAll = []
         self.depts = []
 
@@ -28,7 +28,7 @@ class DataBasics:
         self.loaddata_function()
         self.loaddata_calculation()
         self.loaddata_view_id()
-        self.loaddata_view_name_included()
+        self.loaddata_more()
         self.loaddata_view_name_all()
 
     def initdata_search(self):
@@ -128,14 +128,14 @@ class DataBasics:
             raise
 
     def loaddata_search(self):
-        sql = self.sentence.sql_get_view_name_all(
+        sql = self.sentence.sql_get_view_search(
             self.user.permission, self.user.group, self.user.userno
         )
         try:
             self.dataSearch = pd.DataFrame()
             data = self.connects.get_data_operation(sql)
             if not data.empty:
-                self.dataSearch = data
+                self.dataSearch = data.sort_values("viewno", ascending=True)
         except:
             raise
 
@@ -149,17 +149,6 @@ class DataBasics:
             if not data.empty:
                 for item in data.iloc:
                     self.viewNameAll.append(item.viewname)
-        except:
-            raise
-
-    def loaddata_view_name_included(self):
-        sql = self.sentence.sql_get_view_name_included()
-        try:
-            self.includedViewName = []
-            data = self.connects.get_data_operation(sql)
-            if not data.empty:
-                for item in data.iloc:
-                    self.includedViewName.append(item.viewname)
         except:
             raise
 
@@ -411,5 +400,16 @@ class DataBasics:
                 data = data.replace({pd.NaT: None})
                 data = data.fillna("")
                 return data
+        except:
+            raise
+
+    def loaddata_more(self):
+        sql = self.sentence.sql_get_view_name_more()
+        try:
+            self.moreView = []
+            data = self.connects.get_data_operation(sql)
+            if not data.empty:
+                for item in data.iloc:
+                    self.moreView.append(item.viewname)
         except:
             raise

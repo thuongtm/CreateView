@@ -129,6 +129,12 @@ class Sentences:
         )
         return sql
 
+    def sql_load_more(self, viewNo):
+        sql = "SELECT  * from TVIEW5 where VIEWNO = {0} and STATUS = 1".format(
+            viewNo
+        )
+        return sql
+
     def sql_load_view_release(self, permiss, groups, userno):
         sql = """SELECT t1.viewno, t1.viewname, t1.viewstatus, t1.releasestatus, t1.datasetno, t2.datasetname, t2.datasettable, t1.indb FROM Tviews t1 inner join Tdataset t2 on t1.datasetno = t2.datasetno where t1.viewstatus <> 3 or t1.indb = 2"""
         return sql
@@ -137,8 +143,10 @@ class Sentences:
         sql = """SELECT t1.viewno, t1.viewname, t1.viewstatus, t1.releasestatus, t1.datasetno, t2.datasetname, t2.datasettable, t1.indb FROM Tviews t1 inner join Tdataset t2 on t1.datasetno = t2.datasetno where t1.viewstatus <> 3"""
         return sql
 
-    def sql_get_view_name_included(self):
-        sql = """SELECT ViewName From tviews where INCLUDEDVIEW is null and indb = 2 and viewstatus <> 3"""
+    def sql_get_view_name_more(self):
+        sql = """SELECT ViewName From tviews where INCLUDEDVIEW is null and indb = 2 and viewstatus <> 3
+                    UNION ALL
+                select viewName from tviewmanual where INDB = 2 and VIEWSTATUS <> 3"""
         return sql
 
     def header_included_table(self):
@@ -166,3 +174,6 @@ class Sentences:
             viewName
         )
         return sql
+
+    def header_table_more(self):
+        return ["Action", "ViewConnect", "TypeConnect", "ColumnConnect"]

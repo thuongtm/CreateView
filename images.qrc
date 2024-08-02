@@ -58,5 +58,6 @@
         <file>images/reset-password.png</file>
         <file>images/user.png</file>
         <file>images/hammer.png</file>
+        <file>images/add-plus.png</file>
     </qresource>
 </RCC>

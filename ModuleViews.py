@@ -3,6 +3,7 @@ import Sentences, ModuleDataSets, ModuleCalculations, ModuleSorts
 import ModuleFunctions, ModuleWriteLogs, Connects, ModuleUsers
 import copy
 import pandas as pd
+import ModuleMores
 
 
 class Views:
@@ -27,6 +28,7 @@ class Views:
         self.columnNewList = []
         self.whereSelected = []
         self.havingSelected = []
+        self.moreSelected = []
         self.sentence = Sentences.Sentences()
         self.isUpdate = False
         self.whereLevel = 0
@@ -35,7 +37,9 @@ class Views:
         self.isRelease = False  # status release
         self.isDataRelease = False
         self.isInDB = False  # check release
-        self.writeLog = ModuleWriteLogs.WriteLogs(self.connects)  # writelog transaction
+        self.writeLog = ModuleWriteLogs.WriteLogs(
+            self.connects
+        )  # writelog transaction
 
     def get_str_view_no(self):
         if self.viewNo == 0:
@@ -157,15 +161,8 @@ class Views:
             sql = "{0} HAVING {1}".format(sql, self.sql_having())
         if len(self.sql_sort()) > 0:
             sql = "{0} ORDER BY {1}".format(sql, self.sql_sort())
-        if self.includedView != "":
-            if self.includedType == "In":
-                sql = "{0} INTERSECT SELECT * FROM {1}".format(
-                    sql, self.includedView
-                )
-            else:
-                sql = "{0} MINUS SELECT * FROM {1}".format(
-                    sql, self.includedView
-                )
+        if len(self.sql_more()) > 0:
+            sql = "{0} {1}".format(sql, self.sql_more())
         return sql
 
     def get_name_column_not_select(self):
@@ -570,7 +567,27 @@ class Views:
                 whereSentence = "{0}".format(
                     "ROWNUM <= {0}".format(self.rowSelects)
                 )
+        for item in self.moreSelected:
+            if item.get_int_type() == 1:
+                if len(whereSentence) > 0:
+                    whereSentence = "{0} and {1}".format(
+                        whereSentence, item.get_sql()
+                    )
+                else:
+                    whereSentence = "{0}".format(item.get_sql())
         return whereSentence
+
+    def sql_more(self):
+        moreSentence = ""
+        for item in self.moreSelected:
+            if item.get_int_type() == 2:
+                if len(moreSentence) > 0:
+                    moreSentence = "{0} {1}".format(
+                        moreSentence, item.get_sql()
+                    )
+                else:
+                    moreSentence = "{0}{1}".format(moreSentence, item.get_sql())
+        return moreSentence
 
     def get_level_of_relation_with(self, nameItem, listItem):
         level = 0
@@ -675,6 +692,12 @@ class Views:
                     having.set_line(i)
                     having.set_view_no(self.viewNo)
                     self.connects.insert_view_line_filter(having.sql_insert())
+                # more
+                for i in range(0, len(self.moreSelected)):
+                    more = self.moreSelected[i]
+                    more.set_line(i)
+                    more.set_view_no(self.viewNo)
+                    self.connects.insert_view_line_more(more.sql_insert())
                 self.writeLog.write_transaction(
                     [
                         self.user.userno,
@@ -740,6 +763,7 @@ class Views:
                 self.loaddata_filter(dataBasic)
                 self.loaddata_select_column()
                 self.loaddata_sort()
+                self.loaddata_more()
                 self.set_is_update(True)
         except:
             raise
@@ -822,6 +846,23 @@ class Views:
         except:
             raise
 
+    def loaddata_more(self):
+        sql = self.sentence.sql_load_more(self.viewNo)
+        try:
+            dataMore = self.connects.get_data_operation(sql)
+            dataMore = dataMore.replace({pd.NA: None})
+            dataMore = dataMore.replace({pd.NaT: None})
+            dataMore = dataMore.fillna("")
+            for item in dataMore.iloc:
+                more = ModuleMores.Mores()
+                more.set_view_no(item.viewno)
+                more.set_line(item.lines)
+                more.set_type(item.typesconnect)
+                more.set_view(item.viewconnect, item.columnname)
+                self.moreSelected.append(more)
+        except:
+            raise
+
     def update(self):
         try:
             # update column select
@@ -857,7 +898,12 @@ class Views:
                 having.set_line(i)
                 having.set_view_no(self.viewNo)
                 self.connects.update_view_line_filter(having.sql_insert())
-
+            # more
+            for i in range(0, len(self.moreSelected)):
+                more = self.moreSelected[i]
+                more.set_line(i)
+                more.set_view_no(self.viewNo)
+                self.connects.update_view_line_more(more.sql_insert())
             # header
             self.connects.update_header_view(self.sql_update_header())
             self.writeLog.write_transaction(
@@ -975,3 +1021,53 @@ class Views:
             return self.get_sql_sentence()
         except:
             raise
+
+    def get_list_column_name_select(self):
+        listColumn = []
+        for item in self.columnSelected:
+            listColumn.append(item.columnName)
+        return listColumn
+
+    def get_view_in_more(self):
+        listName = []
+        for item in self.moreSelected:
+            listName.append(item.viewConnect)
+        return listName
+
+    def add_more(self, moreObject):
+        for item in self.moreSelected:
+            if item.viewConnect == moreObject.viewConnect:
+                raise ValueError("View exist in More")
+        self.moreSelected.append(moreObject)
+
+    def get_more_selected(self, viewName, typeConnect):
+        isCheck = False
+        for item in self.moreSelected:
+            if item.typeMore == typeConnect and item.viewConnect == viewName:
+                isCheck = True
+                return copy.deepcopy(item)
+        if not isCheck:
+            raise AttributeError("Not fount more")
+
+    def update_more(self, moreObject):
+        isCheck = False
+        for i in range(0, len(self.moreSelected)):
+            if (
+                self.moreSelected[i].typeMore == moreObject.typeMore
+                and self.moreSelected[i].viewConnect == moreObject.viewConnect
+            ):
+                isCheck = True
+                self.moreSelected[i] = moreObject
+                return
+        if not isCheck:
+            raise AttributeError("Not fount more")
+
+    def delete_more(self, viewName, typeConnect):
+        isCheck = False
+        for item in self.moreSelected:
+            if item.viewConnect == viewName and item.typeMore == typeConnect:
+                self.moreSelected.remove(item)
+                isCheck = True
+                return
+        if not isCheck:
+            raise AttributeError("Not fount more")

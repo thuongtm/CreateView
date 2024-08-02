@@ -31,9 +31,13 @@ git add ModuleViewManuals.py
 git add frmResult.ui
 git add rc_images.py
 git add requirements.txt
+git add ModuleMores.py
 
 git init
 git commit -m "first commit"
 git branch -M main
 git remote add origin https://github.com/thuongtm/CreateView.git
 git push -u origin main
+
+
+pyinstaller -w mainwindow.py -i icon.ico
