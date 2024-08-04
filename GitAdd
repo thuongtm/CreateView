@@ -32,12 +32,23 @@ git add frmResult.ui
 git add rc_images.py
 git add requirements.txt
 git add ModuleMores.py
+git add frmAbout.ui
+git add ModuleProducts.py
+git add Config\Licenses.src
+git add Config\Version.xml
+
 
 git init
 git commit -m "first commit"
 git branch -M main
 git remote add origin https://github.com/thuongtm/CreateView.git
 git push -u origin main
-
+git push -u origin morev1
 
 pyinstaller -w mainwindow.py -i icon.ico
+
+N94F7-0MV1N-2Z7UI-22DVG-Q4OM4
+64JGX-21AG4-C8M2L-OP336-S0T06
+O09U5-A26TD-NTMYG-T2SKV-E04BG
+O5L3D-3USK0-ISUY2-1YMZ3-21UL7
+F55GW-EBGV0-FUHM2-S5D83-PZQNV

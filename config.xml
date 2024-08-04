@@ -1,6 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <config>
-    <databases>
-        <dwh>gAAAAABmg176g_hSqw4eAs0dgMjCEQSKwHTybUvZMas0RT33B8HrQzAQkPYNqZaPyNdi_BBX00UEypFBiEvvNnsanBGUlfKA7lc6LfuAHD4smrDWG88TQyTMPmCRbjDo25hy-UEDSOuN</dwh>
-    </databases>
-    
+ <dwh>
+  gAAAAABmrQb9bAUQJf0Cv3xOjgpPRE1lZsnkFDNFY5JdtXCgyukoXGcMgGKRH8VtyYuuBZzucxq53A6qp4Cw_I_n1S1FzBNLE10sSIlOt-uJKEXjdxN5ucAf7RnNlT8ATTpG5dw0NHOE
+ </dwh>
+ <key>
+  gAAAAABmrQb9Kq8swQ3OCi-FZOPlIFAHHhNUljAd7miaRmjV59LA_19_fH_f-A5Jyi1toPWFdBDtw3ABj8FZmwb7KotlXPQBQA==
+ </key>
 </config>

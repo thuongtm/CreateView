@@ -177,3 +177,17 @@ class Sentences:
 
     def header_table_more(self):
         return ["Action", "ViewConnect", "TypeConnect", "ColumnConnect"]
+
+    def sql_get_license(self):
+        sql = "Select keylicense from TLicense where actives is null and activedate is null and use_host is null"
+        return sql
+
+    def sql_check_license(self):
+        sql = "Select keylicense from TLicense where actives = 1 and activedate is not null and use_host is not null"
+        return sql
+
+    def sql_check_license_login(self, licenseUse, userno):
+        sql = "select * from TlicenseUser where LICENSE = '{0}' or USER1 = {1}".format(
+            licenseUse, userno
+        )
+        return sql

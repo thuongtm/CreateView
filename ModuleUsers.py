@@ -17,7 +17,7 @@ class Users:
         self.permission = "ANY"
         self.phone = str()
         self.sentence = Sentences.Sentences()
-        self.isLogin = True
+        self.isLogin = False
         self.writeLog = ModuleWriteLogs.WriteLogs(connects)
         self.sercurity = ModuleSecurity.Security()
         self.status = True  # 1 yes 2 no

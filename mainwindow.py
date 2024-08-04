@@ -1,4 +1,4 @@
-import sys, copy
+import sys, copy, os
 import pandas as pd
 
 from PySide6.QtWidgets import (
@@ -33,12 +33,13 @@ from ui_frmChangePassword import Ui_ChangePassword
 from ui_frmCreateUser import Ui_CreateUser
 from ui_frmViewManual import Ui_CreateManual
 from ui_frmResult import Ui_ShowResult
+from ui_frmAbout import Ui_About
 
 # import Module
 import Connects, ModuleUsers, ModuleDataBasics, ModuleViews, ModuleColumns
 import ModuleSorts, Sentences, ModuleFunctions, ModuleCalculations
 import TableViewModel, ModuleViewAction, ModuleWriteLogs, ModuleViewManuals
-import ModuleMores
+import ModuleMores, ModuleProducts
 
 
 class MainWindow(QMainWindow):
@@ -52,6 +53,14 @@ class MainWindow(QMainWindow):
         self.show_message(0, "Close Program", "Do you want Quit Program ?")
         if self.messageBoxButton == QMessageBox.StandardButton.Ok:
             if self.users.isLogin:
+                self.menu_log_out()
+                if self.products.isLicenses:
+                    licensesUse = self.products.licenses
+                else:
+                    licensesUse = "Trial"
+                self.connects.delete_license_use(
+                    [licensesUse, self.users.userno]
+                )
                 self.writeLog.write_login(self.users.user, "Out")
             self.view_run_dataset_widgets = QWidget()
             self.view_run_dataset_widgets.close()
@@ -74,6 +83,7 @@ class MainWindow(QMainWindow):
         self.ui.actionCreate_View_Manual.triggered.connect(
             self.menu_view_create_manual
         )
+        self.ui.actionAbout.triggered.connect(self.menu_system_about)
 
         # define variable global
         try:
@@ -84,11 +94,19 @@ class MainWindow(QMainWindow):
                 self.connects, self.users
             )
             self.writeLog = ModuleWriteLogs.WriteLogs(self.connects)
+            self.products = ModuleProducts.Products(self.connects)
         except Exception as e:
             self.show_message(3, "Exception", str(e.__class__.__name__), str(e))
+            sys.exit()
 
-        # check login
-        self.loadfrm_login()
+        # check license
+        if not self.products.isTrial:
+            self.menu_system_about()
+            if not self.products.isTrial:
+                sys.exit()
+        else:
+            # check login
+            self.loadfrm_login()
 
     def enable_menu_by_index(self, index):
         self.ui.actionCreate_View.setEnabled(index != 1)
@@ -185,19 +203,65 @@ class MainWindow(QMainWindow):
                 if not self.users.isLogin:
                     self.show_message(2, "Warning Login", message)
                 else:
+                    if self.products.isLicenses:
+                        licensesUse = self.products.licenses
+                    else:
+                        licensesUse = "Trial"
+                        # check login license
+                    sql = self.sentence.sql_check_license_login(
+                        licensesUse, self.users.userno
+                    )
+                    try:
+                        data = self.connects.get_data_operation(sql)
+                        if data.empty:
+                            host = os.getlogin()
+                            self.connects.insert_license_use(
+                                [licensesUse, self.users.userno, host]
+                            )
+                        else:
+                            if licensesUse == "Trial":
+                                self.show_message(
+                                    2,
+                                    "License",
+                                    "User is use. Please use other user.",
+                                )
+                                self.users = ModuleUsers.Users(self.connects)
+                            else:
+                                self.show_message(
+                                    2,
+                                    "License",
+                                    "License or user is use. Please use other License or user.",
+                                )
+                                sys.exit()
+                    except Exception as e:
+                        self.show_message(
+                            3,
+                            "License",
+                            "Error when login license.",
+                            str(e.args),
+                        )
+                        self.users = ModuleUsers.Users(self.connects)
                     self.menu_view_home()
         except Exception as e:
             self.show_message(3, "Exception", "Error when login.", str(e.args))
 
     def menu_log_out(self):
         self.writeLog.write_login(self.users.user, "Out")
+        if self.products.isLicenses:
+            licensesUse = self.products.licenses
+        else:
+            licensesUse = "Trial"
+        self.connects.delete_license_use([licensesUse, self.users.userno])
         self.users = ModuleUsers.Users(self.connects)
         self.loadfrm_login()
 
     def menu_view_home(self):
-        self.visiable_login()
-        self.ui.scrollArea.setWidget(QWidget())
-        self.enable_menu_by_index(0)
+        if self.users.isLogin:
+            self.visiable_login()
+            self.ui.scrollArea.setWidget(QWidget())
+            self.enable_menu_by_index(0)
+        else:
+            self.loadfrm_login()
 
     ########################    SEARCH #########################3
     def menu_view_search(self):
@@ -1407,7 +1471,7 @@ class MainWindow(QMainWindow):
         if nameView.strip() != "":
             if self.moreViewCurrent.get_int_type() == 1:
                 self.loaddata_column_of_view()
-        
+
         self.view_create_ui.btnMoreAdd.setEnabled(
             nameView.strip() != "" and not self.moreViewCurrent.isUpdate
         )
@@ -2580,6 +2644,58 @@ class MainWindow(QMainWindow):
 
             if not isCheck:
                 self.view_manual_ui.leViewName.setText("")
+
+    ##################  ABOUT ####################
+    def menu_system_about(self):
+        self.system_about_ui = Ui_About()
+        self.system_about_widgets = QDialog()
+        self.system_about_ui.setupUi(self.system_about_widgets)
+
+        self.system_about_ui.buttonBox.clicked.connect(self.click_btnbox_about)
+        self.system_about_ui.btnActive.clicked.connect(
+            self.click_btn_about_active
+        )
+        self.loaddata_about()
+        self.system_about_widgets.exec()
+
+    def loaddata_about(self):
+        self.system_about_ui.lbVersion.setText(
+            "Version:  " + self.products.version
+        )
+        self.system_about_ui.lbLicense.setText(
+            "License: " + self.products.get_license()
+        )
+        self.system_about_ui.leLicense.setText("")
+        self.system_about_ui.pltInfo.setPlainText(self.products.info)
+        self.system_about_ui.leLicense.setVisible(False)
+        self.system_about_ui.btnActive.setVisible(not self.products.isLicenses)
+        self.products.set_to_active(self.products.isLicenses)
+
+    def click_btnbox_about(self):
+        self.system_about_widgets.accept()
+
+    def click_btn_about_active(self):
+        if self.products.isToActive:
+            key = self.system_about_ui.leLicense.text()
+            if key.strip() != "":
+                try:
+                    self.products.check_key(key)
+                    self.products = ModuleProducts.Products(self.connects)
+                    self.loaddata_about()
+                except Exception as e:
+                    self.show_message(
+                        3,
+                        "Check License Error",
+                        str(e.__class__.__name__),
+                        str(e),
+                    )
+            else:
+                self.loaddata_about()
+        else:
+            self.products.set_to_active(True)
+            self.system_about_ui.lbLicense.setText("License:")
+            self.system_about_ui.leLicense.setVisible(True)
+            self.system_about_ui.leLicense.setEnabled(True)
 
 
 if __name__ == "__main__":

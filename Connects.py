@@ -34,6 +34,7 @@ class Connects:
                 self.connect_dwh = connects.connect_dwh
                 self.user = connects.user
                 self.db = connects.db
+                self.numberUse = connects.numberUse
         except:
             raise
 
@@ -45,10 +46,41 @@ class Connects:
                 c = ModuleSecurity.Security()
                 bs_data = BeautifulSoup(config, "xml")
                 bs_info_dwh = c.decrypt(bs_data.find("dwh").getText())
+                self.numberUse = int(c.decrypt(bs_data.find("key").getText()))
                 (self.server, self.port, self.user, self.password, self.db) = (
                     bs_info_dwh.split(";")
                 )
                 self.connect_dwh = f"oracle+oracledb://{self.user}:{self.password}@{self.server}:{self.port}/?service_name={self.db}"
+        except:
+            raise
+
+    def write_config(self, input):
+        try:
+            c = ModuleSecurity.Security()
+            keyStr = c.encrypt(str(input), "Key")
+            soup = BeautifulSoup(features="xml")
+            data = soup.new_tag("config")
+            soup.append(data)
+            database = soup.new_tag("dwh")
+            database.string = c.encrypt(
+                self.server
+                + ";"
+                + self.port
+                + ";"
+                + self.user
+                + ";"
+                + self.password
+                + ";"
+                + self.db
+            )
+            data.append(database)
+            key = soup.new_tag("key")
+            key.string = keyStr
+            data.append(key)
+            link_file_config = str(os.getcwd()) + "\\config.xml"
+            myXml = open(link_file_config, "w")
+            myXml.write(soup.prettify())
+            myXml.close()
         except:
             raise
 
@@ -524,6 +556,51 @@ class Connects:
             cursors.callproc("t_proc_view_manual_release", parameters=parameter)
         except:
             raise
+        finally:
+            cursors.close()
+            connection.close()
+
+    def update_license(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc("t_proc_license_update", parameters=parameter)
+        except:
+            raise
+        finally:
+            cursors.close()
+            connection.close()
+
+    def delete_license_use(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc("t_proc_license_delete", parameters=parameter)
+        except:
+            pass
+        finally:
+            cursors.close()
+            connection.close()
+
+    def insert_license_use(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc("t_proc_license_insert", parameters=parameter)
+        except:
+            pass
         finally:
             cursors.close()
             connection.close()
