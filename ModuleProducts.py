@@ -103,7 +103,7 @@ class Products:
         if not isCheck:
             self.set_to_active(False)
 
-    def check_key(self, key):
+    def check_key(self, key, userno):
         isCheck = False
         # kiểm tra thời hạn licence
         if key == "":
@@ -145,6 +145,8 @@ class Products:
                 # update license
                 host = os.getlogin()
                 self.connects.update_license([keySer, host])
+                self.connects.delete_license_use(["Trial", userno])
+                self.connects.insert_license_use([key, userno])
             except:
                 raise
 
@@ -194,7 +196,6 @@ class Products:
     def check_trial(self):
         user = os.getlogin()
         licenPath = os.path.join("C:\\", "Users", user, "crview.licen")
-        print(licenPath)
         try:
             if os.path.exists(licenPath):
                 try:
@@ -202,8 +203,8 @@ class Products:
                         strDate = self.security.decrypt(li.read(), "Date")
                         firstDate = datetime.strptime(strDate, "%Y-%m-%d")
                         dateUse = (datetime.now() - firstDate).days
-                        self.set_is_trial(not dateUse > 1)
-                        self.set_time_trial(1 - dateUse)
+                        self.set_is_trial(not dateUse > 30)
+                        self.set_time_trial(30 - dateUse)
                 except IOError:
                     self.permission = True
                     raise IOError("Run program with Administrator read")
@@ -221,7 +222,7 @@ class Products:
                             li.close()
                             self.connects.write_config("1")
                             self.set_is_trial(True)
-                            self.set_time_trial(1)
+                            self.set_time_trial(30)
                     except IOError:
                         self.permission = True
                         raise IOError("Run program with Administrator create")

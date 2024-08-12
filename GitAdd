@@ -36,6 +36,7 @@ git add frmAbout.ui
 git add ModuleProducts.py
 git add Config\Licenses.src
 git add Config\Version.xml
+git add ModuleMerge.py
 
 
 git init
@@ -47,8 +48,8 @@ git push -u origin morev1
 
 pyinstaller -w mainwindow.py -i icon.ico
 
-N94F7-0MV1N-2Z7UI-22DVG-Q4OM4
-64JGX-21AG4-C8M2L-OP336-S0T06
-O09U5-A26TD-NTMYG-T2SKV-E04BG
+N94F7-0MV1N-2Z7UI-22DVG-Q4OM4 - Tú
+64JGX-21AG4-C8M2L-OP336-S0T06 - Ly
+O09U5-A26TD-NTMYG-T2SKV-E04BG - Thương
 O5L3D-3USK0-ISUY2-1YMZ3-21UL7
 F55GW-EBGV0-FUHM2-S5D83-PZQNV

@@ -1,6 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import Sentences, Connects, ModuleDataSets, ModuleFunctions, ModuleCalculations
-import ModuleViewAction, ModuleUsers
+import ModuleViewAction, ModuleUsers, ModuleMerge
 import copy
 import pandas as pd
 
@@ -22,6 +22,7 @@ class DataBasics:
         self.moreView = []
         self.viewNameAll = []
         self.depts = []
+        self.mergeList = []
 
     def initdata_create(self):
         self.loaddata_dataset_all()
@@ -30,6 +31,7 @@ class DataBasics:
         self.loaddata_view_id()
         self.loaddata_more()
         self.loaddata_view_name_all()
+        self.loaddata_merge()
 
     def initdata_search(self):
         self.loaddata_search()
@@ -39,11 +41,13 @@ class DataBasics:
         self.loaddata_function()
         self.loaddata_calculation()
         self.loaddata_view_release()
+        self.loaddata_merge()
 
     def initdata_run(self):
         self.loaddata_dataset_all()
         self.loaddata_function()
         self.loaddata_calculation()
+        self.loaddata_merge()
         self.loaddata_view_run()
 
     def initdata_create_user(self):
@@ -242,9 +246,9 @@ class DataBasics:
         for item in self.actionViewList:
             listName.append(item.viewName)
         if len(listName) > 0:
-            return [""] + listName
+            return [""] + sorted(listName)
         else:
-            return listName
+            return sorted(listName)
 
     def get_view_release_by_name(self, vName):
         for item in self.actionViewList:
@@ -270,9 +274,9 @@ class DataBasics:
         for item in self.runViewList:
             listName.append(item.viewName)
         if len(listName) > 0:
-            return [""] + listName
+            return sorted([""] + listName)
         else:
-            return listName
+            return sorted(listName)
 
     def get_view_run_by_name(self, vName):
         for item in self.runViewList:
@@ -413,3 +417,29 @@ class DataBasics:
                     self.moreView.append(item.viewname)
         except:
             raise
+
+    def loaddata_merge(self):
+        sql = self.sentence.sql_load_operation()
+        self.mergeList = []
+        try:
+            data = self.connects.get_data_operation(sql)
+            if data.empty:
+                raise ValueError("Do not found Operation.")
+            else:
+                for item in data.iloc:
+                    merge = ModuleMerge.Merge()
+                    merge.set_data(item)
+                    self.mergeList.append(merge)
+        except:
+            raise
+
+    def get_merge_name(self):
+        listMer = []
+        for item in self.mergeList:
+            listMer.append(item.operShow)
+        return listMer
+
+    def get_operation_by_name(self, op):
+        for item in self.mergeList:
+            if item.operShow == op:
+                return copy.deepcopy(item)

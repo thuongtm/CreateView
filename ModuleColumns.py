@@ -13,6 +13,11 @@ class Columns:
         self.numberUse = 0
         self.isColNew = False
         self.isSelected = False
+        # 0 - column load from DB
+        # 1 - column add from function
+        # 2 - column merge None aggreate -> không cho merge tiếp
+        # 3 - column merge True aggreate (1 or 2) --> không cho merge tiếp
+        self.level = 0
 
         if not column == None:
             self.datasetNo = column.datasetNo
@@ -24,6 +29,7 @@ class Columns:
             self.numberUse = column.numberUse
             self.isColNew = column.isColNew
             self.isSelected = column.isSelected
+            self.level = column.level
 
     def set_line(self, index):
         self.lines = index

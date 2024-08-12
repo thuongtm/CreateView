@@ -40,6 +40,18 @@ class Functions:
         ]
         return listParameter
 
+    def get_key(self):
+        keyName = self.funNames.replace("{column}", self.column.columnName)
+        if self.numbers >= 2:
+            keyName = keyName.replace(
+                "{value1}", self.get_value_with_type(self.value1)
+            )
+        if self.numbers == 3:
+            keyName = keyName.replace(
+                "{value2}", self.get_value_with_type(self.value2)
+            )
+        return keyName
+
     def set_view_no(self, index):
         self.viewNo = index
 

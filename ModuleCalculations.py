@@ -29,6 +29,29 @@ class Calculations:
         self.valueBasic1 = str()
         self.valueBasic2 = str()
 
+    def update(self, cal):
+        self.calNo = cal.calNo
+        self.calNames = cal.calNames
+        self.calShow = cal.calShow
+        self.numbers = cal.numbers
+        self.isMany = cal.isMany
+        self.valueTypes = cal.valueTypes
+        self.viewNo = cal.viewNo
+        self.lines = cal.lines
+        self.columns = cal.columns
+        self.isColumn = cal.isColumn
+        self.value1 = cal.value1
+        self.value2 = cal.value2
+        self.isAgg = cal.isAgg
+        self.level = cal.level
+        self.relation = cal.relation
+        self.relationWith = cal.relationWith
+        self.isCal = cal.isCal
+        self.calKeyOld = cal.calKeyOld
+        self.sentence = cal.sentence
+        self.valueBasic1 = cal.valueBasic1
+        self.valueBasic2 = cal.valueBasic2
+
     def set_line(self, index):
         self.lines = index
 

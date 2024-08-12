@@ -1,6 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import Sentences, ModuleDataSets, ModuleCalculations, ModuleSorts
-import ModuleFunctions, ModuleWriteLogs, Connects, ModuleUsers
+import ModuleFunctions, ModuleWriteLogs, Connects, ModuleUsers, ModuleMerge
 import copy
 import pandas as pd
 import ModuleMores
@@ -29,6 +29,7 @@ class Views:
         self.whereSelected = []
         self.havingSelected = []
         self.moreSelected = []
+        self.mergeSelected = []
         self.sentence = Sentences.Sentences()
         self.isUpdate = False
         self.whereLevel = 0
@@ -125,6 +126,9 @@ class Views:
 
     def get_name_column_dataset(self):
         return self.dataset.get_name_column()
+
+    def get_name_column_new(self):
+        return self.dataset.get_name_column_new()
 
     def get_column_not_select(self):
         listNew = []
@@ -235,18 +239,24 @@ class Views:
                 break
 
     def add_sort(self, sort):
+        isAdd = True
         for item in self.sortSelect:
             if item.columns.columnName == sort.columns.columnName:
+                isAdd = False
                 raise ValueError("Column is exist in list Sort")
         self.sortSelect.append(sort)
         self.dataset.increase_use(sort.columns)
+        return isAdd
 
-    def delete_sort_by_column_name(self, colName):
+    def delete_sort(self, colName):
+        isDelete = False
         for item in self.sortSelect:
             if item.columns.columnName == colName:
-                self.sortSelect.remove(item)
                 self.dataset.decrease_use(item.columns)
+                self.sortSelect.remove(item)
+                isDelete = True
                 break
+        return isDelete
 
     def get_sort_by_column_name(self, colName):
         for item in self.sortSelect:
@@ -254,29 +264,32 @@ class Views:
                 return copy.deepcopy(item)
 
     def update_sort(self, sort):
+        isUpdate = False
         for item in self.sortSelect:
             if item.columns.columnName == sort.columns.columnName:
                 item.types = sort.types
-                return
+                isUpdate = True
+                break
+        return isUpdate
 
     def add_column_new(self, function):
         isCheck = True
+        isAdd = False
         for item in self.columnNewList:
-            if (
-                function.column.columnName == item.column.columnName
-                and function.funNo == item.funNo
-            ):
+            if function.get_key() == item.get_key():
                 isCheck = False
         if isCheck:
             self.columnNewList.append(function)
             self.dataset.add_column_new(function)
             self.dataset.increase_use(function.column)
+            isAdd = True
         else:
             raise ValueError(
                 "Column: {0} and Function No: {1} is exist.".format(
                     function.column.columnName, function.funNo
                 )
             )
+        return isAdd
 
     def get_function_by_key(self, colName, funShow):
         for item in self.columnNewList:
@@ -287,9 +300,10 @@ class Views:
                 return copy.deepcopy(item)
 
     def update_column_new(self, function):
+        isUpdate = False
         if self.check_use_function(function):
             for item in self.columnNewList:
-                if item.get_column_name() == function.funKeyOld:
+                if item.get_key() == function.funKeyOld:
                     item.value1 = function.value1
                     item.value2 = function.value2
                     break
@@ -298,12 +312,14 @@ class Views:
                     item.columnName = function.get_column_name()
                     item.columnNameNew = function.get_column_name_with_auto()
                     break
+            isUpdate = True
         else:
             raise ValueError(
                 "Column: {0} and Function No: {1} being used.".format(
                     function.column.columnName, function.funNames
                 )
             )
+        return isUpdate
 
     def check_use_function(self, function):
         isCheck = True
@@ -314,8 +330,9 @@ class Views:
         return isCheck
 
     def delete_column_new(self, colName, funShow):
+        isDelete = False
         function = self.get_function_by_key(colName, funShow)
-        function.funKeyOld = function.get_column_name()
+        function.funKeyOld = function.get_key()
         if self.check_use_function(function):
             for item in self.dataset.columnList:
                 if item.columnName == function.funKeyOld:
@@ -329,10 +346,12 @@ class Views:
                 if item.get_column_name() == function.funKeyOld:
                     self.columnNewList.remove(item)
                     break
+            isDelete = True
         else:
             raise ValueError(
                 "Column: {0} being used.".format(function.funKeyOld)
             )
+        return isDelete
 
     def get_calculation_list_all(self):
         return self.whereSelected + self.havingSelected
@@ -398,21 +417,39 @@ class Views:
                 if item.get_key_cal() == calShow:
                     return copy.deepcopy(item)
 
-    def update_calculation(self, cal):
+    def update_calculation(self, cal, calold):
         if cal.isAgg:
-            for i in range(0, len(self.havingSelected)):
-                if self.havingSelected[i].get_key_cal() == cal.get_key_cal():
-                    self.havingSelected[i] = cal
-                    if cal.level > self.havingLevel:
+            for item in self.havingSelected:
+                if item.get_key_cal() == calold.get_key_cal():
+                    item.update(cal)
+                    for item in self.havingSelected:
+                        if item.relationWith == calold.get_key_cal():
+                            item.relationWith = cal.get_key_cal()
+                    if cal.level >= self.havingLevel:
                         self.havingLevel = cal.level
-                    break
+                    else:
+                        max = 0
+                        for item in self.havingSelected:
+                            if item.level > max:
+                                max = item.level
+                        self.havingLevel = max
+                    return
         else:
-            for i in range(0, len(self.whereSelected)):
-                if self.whereSelected[i].get_key_cal() == cal.get_key_cal():
-                    self.whereSelected[i] = cal
-                    if cal.level > self.whereLevel:
+            for item in self.whereSelected:
+                if item.get_key_cal() == calold.get_key_cal():
+                    item.update(cal)
+                    for item in self.whereSelected:
+                        if item.relationWith == calold.get_key_cal():
+                            item.relationWith = cal.get_key_cal()
+                    if cal.level >= self.whereLevel:
                         self.whereLevel = cal.level
-                    break
+                    else:
+                        max = 0
+                        for item in self.whereSelected:
+                            if item.level > max:
+                                max = item.level
+                        self.whereLevel = max
+                    return
 
     def delete_calculation(self, colName, calShow, isAgg):
         try:
@@ -509,13 +546,46 @@ class Views:
             listGroup = []
             for item in self.columnSelected:
                 if not item.isAgg:
-                    listGroup.append(item.columnName)
+                    if item.level == 2:
+                        itemMerge = self.get_merge_by_column(item)
+                        listGroup = listGroup + self.get_column_level01(
+                            itemMerge
+                        )
+                    else:
+                        listGroup.append(item.columnName)
             for item in self.sortSelect:
                 if not item.isAgg:
                     listGroup.append(item.columns.columnName)
-            return ", ".join(listGroup)
+            list2 = []
+            for item in listGroup:
+                if item not in list2:
+                    list2.append(item)
+            return ", ".join(list2)
         else:
             return ""
+
+    def get_column_level01(self, item):
+        listItem2 = [item]
+        listName = []
+        while len(listItem2) > 0:
+            itemCheck = listItem2[0]
+            listItem2.remove(itemCheck)
+            if itemCheck.column1.level == 2:
+                merge1 = self.get_merge_by_column(itemCheck.column1)
+                listItem2.append(merge1)
+            else:
+                listName.append(itemCheck.column1.columnName)
+            if itemCheck.column2.level == 2:
+                merge2 = self.get_merge_by_column(itemCheck.column2)
+                listItem2.append(merge2)
+            else:
+                listName.append(itemCheck.column2.columnName)
+        return listName
+
+    def get_merge_by_column(self, column):
+        for item in self.mergeSelected:
+            if item.get_key() == column.columnName:
+                return copy.deepcopy(item)
 
     def sql_where(self):
         whereSentence = ""
@@ -698,6 +768,12 @@ class Views:
                     more.set_line(i)
                     more.set_view_no(self.viewNo)
                     self.connects.insert_view_line_more(more.sql_insert())
+                # merge
+                for i in range(0, len(self.mergeSelected)):
+                    merge = self.mergeSelected[i]
+                    merge.set_view_no(self.viewNo)
+                    merge.set_line(i)
+                    self.connects.insert_view_line_merge(merge.sql_insert())
                 self.writeLog.write_transaction(
                     [
                         self.user.userno,
@@ -759,7 +835,10 @@ class Views:
                 )
                 dataset.set_column_list()
                 self.set_dataset(dataset)
+                self.loaddata_merge(dataBasic.mergeList)
                 self.loaddata_columnnew(dataBasic)
+                print("Loaddata column")
+                self.update_merge_use()
                 self.loaddata_filter(dataBasic)
                 self.loaddata_select_column()
                 self.loaddata_sort()
@@ -863,6 +942,29 @@ class Views:
         except:
             raise
 
+    def loaddata_merge(self, operList):
+        sql = self.sentence.sql_load_merge(self.viewNo)
+        try:
+            dataMerge = self.connects.get_data_operation(sql)
+            dataMerge = dataMerge.replace({pd.NA: None})
+            dataMerge = dataMerge.replace({pd.NaT: None})
+            dataMerge = dataMerge.fillna("")
+            for item in dataMerge.iloc:
+                merge = ModuleMerge.Merge()
+                merge.set_load_data(item, operList)
+                self.mergeSelected.append(merge)
+                self.dataset.add_merge_load(merge)
+        except:
+            raise
+
+    def update_merge_use(self):
+        for item in self.mergeSelected:
+            column1 = self.get_column_by_name(item.column1Name)
+            column2 = self.get_column_by_name(item.column2Name)
+            item.updateColumn(column1, column2)
+            self.dataset.increase_use(column1)
+            self.dataset.increase_use(column2)
+
     def update(self):
         try:
             # update column select
@@ -904,6 +1006,12 @@ class Views:
                 more.set_line(i)
                 more.set_view_no(self.viewNo)
                 self.connects.update_view_line_more(more.sql_insert())
+            # merge
+            for i in range(0, len(self.mergeSelected)):
+                merge = self.mergeSelected[i]
+                merge.set_view_no(self.viewNo)
+                merge.set_line(i)
+                self.connects.update_view_line_merge(merge.sql_insert())
             # header
             self.connects.update_header_view(self.sql_update_header())
             self.writeLog.write_transaction(
@@ -1035,10 +1143,14 @@ class Views:
         return listName
 
     def add_more(self, moreObject):
+        isAdd = False
         for item in self.moreSelected:
             if item.viewConnect == moreObject.viewConnect:
                 raise ValueError("View exist in More")
         self.moreSelected.append(moreObject)
+        self.includedView = "Yes"
+        isAdd = True
+        return isAdd
 
     def get_more_selected(self, viewName, typeConnect):
         isCheck = False
@@ -1050,24 +1162,87 @@ class Views:
             raise AttributeError("Not fount more")
 
     def update_more(self, moreObject):
-        isCheck = False
+        isUpdate = False
         for i in range(0, len(self.moreSelected)):
             if (
                 self.moreSelected[i].typeMore == moreObject.typeMore
                 and self.moreSelected[i].viewConnect == moreObject.viewConnect
             ):
-                isCheck = True
-                self.moreSelected[i] = moreObject
-                return
-        if not isCheck:
-            raise AttributeError("Not fount more")
+                isUpdate = True
+                self.moreSelected[i].update(moreObject)
+                break
+        return isUpdate
 
     def delete_more(self, viewName, typeConnect):
-        isCheck = False
+        isDelete = False
         for item in self.moreSelected:
             if item.viewConnect == viewName and item.typeMore == typeConnect:
                 self.moreSelected.remove(item)
-                isCheck = True
-                return
-        if not isCheck:
-            raise AttributeError("Not fount more")
+                isDelete = True
+                if len(self.moreSelected) <= 0:
+                    self.includedView = str()
+                break
+        return isDelete
+
+    def get_column_merge_01(self, typ):
+        listColumn = []
+        for item in self.dataset.columnList:
+            if str(item.typeColumn).upper() in self.sentence.get_type_column(
+                typ
+            ):
+                listColumn.append(item.columnName)
+        return sorted(listColumn)
+
+    def get_column_merge_02(self, typ, column1):
+        listColumn = []
+        for item in self.dataset.columnList:
+            if (
+                str(item.typeColumn).upper()
+                in self.sentence.get_type_column(typ)
+                and item.isAgg == column1.isAgg
+                and item.columnName != column1.columnName
+            ):
+                listColumn.append(item.columnName)
+        return sorted(listColumn)
+
+    def add_merge(self, merge):
+        isCheck = True
+        isAdd = False
+        for item in self.mergeSelected:
+            if merge.get_key() == item.get_key():
+                isCheck = False
+                raise ValueError("Column Merge is Exist.")
+        if isCheck:
+            self.mergeSelected.append(merge)
+            self.dataset.add_merge(merge)
+            isAdd = True
+        return isAdd
+
+    def get_merge(self, colName1, colName2, operation):
+        for item in self.mergeSelected:
+            if (
+                item.column1.columnName == colName1
+                and item.column2.columnName == colName2
+                and item.operShow == operation
+            ):
+                return copy.deepcopy(item)
+
+    def delete_merge(self, colName1, colName2, operation):
+        merge = self.get_merge(colName1, colName2, operation)
+        if merge != None:
+            numberuse = self.dataset.get_use_merge(merge)
+            isDelete = False
+            if numberuse > 0:
+                raise ValueError("Merge Column is use so cannot delete.")
+            else:
+                for item in self.mergeSelected:
+                    if (
+                        item.operShow == operation
+                        and item.column1.columnName == colName1
+                        and item.column2.columnName == colName2
+                    ):
+                        if self.dataset.delete_merge(item):
+                            self.mergeSelected.remove(item)
+                            isDelete = True
+                        break
+        return isDelete

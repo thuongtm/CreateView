@@ -82,6 +82,7 @@ class DataSets:
         col.numberUse = 0
         col.isColNew = True
         col.isSelected = False
+        col.level = 1
         self.columnList.append(col)
 
     def increase_use(self, column):
@@ -95,3 +96,56 @@ class DataSets:
             if item.columnName == column.columnName:
                 item.decrease_use()
                 break
+
+    def add_merge(self, merge):
+        column = ModuleColumns.Columns()
+        column.datasetNo = self.datasetNo
+        column.lines = 0
+        column.columnName = merge.get_key()
+        column.columnNameNew = merge.get_auto_key()
+        column.typeColumn = merge.get_type_return()
+        column.isAgg = merge.get_isagg()
+        column.numberUse = 0
+        column.isColNew = True
+        column.isSelected = False
+        column.level = 2
+        self.columnList.append(column)
+        self.increase_use(merge.column1)
+        self.increase_use(merge.column2)
+
+    def get_use_merge(self, merge):
+        for item in self.columnList:
+            if item.columnName == merge.get_key():
+                return item.numberUse
+
+    def get_name_column_new(self):
+        listName = []
+        for item in self.columnList:
+            if not item.isAgg:
+                listName.append(item.columnName)
+        return sorted(listName)
+
+    def delete_merge(self, merge):
+        isDelete = False
+        for item in self.columnList:
+            if item.columnName == merge.get_key():
+                self.columnList.remove(item)
+                self.decrease_use(merge.column1)
+                self.decrease_use(merge.column2)
+                isDelete = True
+                break
+        return isDelete
+
+    def add_merge_load(self, merge):
+        column = ModuleColumns.Columns()
+        column.datasetNo = self.datasetNo
+        column.lines = 0
+        column.columnName = merge.get_key_load()
+        column.columnNameNew = merge.get_auto_key_load()
+        column.typeColumn = merge.typeReturn
+        column.isAgg = merge.agg
+        column.numberUse = 0
+        column.isColNew = True
+        column.isSelected = False
+        column.level = 2
+        self.columnList.append(column)

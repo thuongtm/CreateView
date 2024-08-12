@@ -604,3 +604,39 @@ class Connects:
         finally:
             cursors.close()
             connection.close()
+
+    def insert_view_line_merge(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc(
+                "t_proc_view_merge_add",
+                parameters=parameter,
+            )
+        except:
+            raise
+        finally:
+            cursors.close()
+            connection.close()
+
+    def update_view_line_merge(self, parameter):
+        try:
+            connection = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=f"{self.server}/{self.db}",
+            )
+            cursors = connection.cursor()
+            cursors.callproc(
+                "t_proc_view_merge_update",
+                parameters=parameter,
+            )
+        except:
+            raise
+        finally:
+            cursors.close()
+            connection.close()

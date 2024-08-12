@@ -39,7 +39,7 @@ from ui_frmAbout import Ui_About
 import Connects, ModuleUsers, ModuleDataBasics, ModuleViews, ModuleColumns
 import ModuleSorts, Sentences, ModuleFunctions, ModuleCalculations
 import TableViewModel, ModuleViewAction, ModuleWriteLogs, ModuleViewManuals
-import ModuleMores, ModuleProducts
+import ModuleMores, ModuleProducts, ModuleMerge
 
 
 class MainWindow(QMainWindow):
@@ -80,9 +80,10 @@ class MainWindow(QMainWindow):
             self.menu_change_password
         )
         self.ui.actionCreate_User.triggered.connect(self.menu_user_create)
-        self.ui.actionCreate_View_Manual.triggered.connect(
-            self.menu_view_create_manual
-        )
+        self.ui.actionCreate_View_Manual.setVisible(False)
+        # self.ui.actionCreate_View_Manual.triggered.connect(
+        #    self.menu_view_create_manual
+        # )
         self.ui.actionAbout.triggered.connect(self.menu_system_about)
 
         # define variable global
@@ -117,6 +118,7 @@ class MainWindow(QMainWindow):
             self.users.is_admin() and index != 5
         )
         self.ui.actionCreate_View_Manual.setEnabled(index != 6)
+        self.ui.actionCreate_View_Manual.setEnabled(False)
 
     def show_message(self, type, title, content, moreinfo=None):
         messageBox = QMessageBox()
@@ -482,7 +484,19 @@ class MainWindow(QMainWindow):
             self.itemdoubleclick_columnnew
         )
 
-        # event new column plus
+        # event merge column
+        self.view_create_ui.cbbMergeOperation.currentIndexChanged.connect(
+            self.change_cbb_merge_operation
+        )
+        self.view_create_ui.cbbMergeColumn1.currentIndexChanged.connect(
+            self.change_cbb_merge_column1
+        )
+        self.view_create_ui.cbbMergeColumn2.currentIndexChanged.connect(
+            self.change_cbb_merge_column2
+        )
+        self.view_create_ui.btnMergerAdd.clicked.connect(
+            self.click_btn_merge_add
+        )
 
         # event filter
         self.view_create_ui.cbbFilterColumn.currentIndexChanged.connect(
@@ -574,12 +588,19 @@ class MainWindow(QMainWindow):
         # define info after select dataset
         self.click_btn_tab_select_column()  # --> select tab select column
         self.loaddata_view_header()  # --> load data header: name, top, id, distint
-        self.loaddata_column_cbb()  # --> load data of dataset to cbb, lv
+        self.loaddata_select()  # --: load data: tab select
+        self.loaddata_sort()  # --: loadata: tab sort
+        self.loaddata_tbw_sort()  # --: loaddata: tbw sort
+        self.loaddata_newcolumn()  # --: load data: create new column
+        self.loaddata_tbw_columnnew()  # --: load data : tbw new column
+        self.loaddata_filter()  # --: load data: fillter
+        self.loaddata_tbw_filter()  # --: load data: tbw filter
+        self.loaddata_more()  # --: load data: more view
+        self.loaddata_tbw_more()  # --: load data: tbw more
         self.enable_select_dataset()  # --> enable or of when select dataset
         self.update_sql_sentence()  # --> update sql
-        self.loaddata_tbw_sort()  # --> load data of table sort
-        self.loaddata_tbw_columnnew()  # --> load data of table new column
-        self.loaddata_tbw_filter()  # --> load data filter to table widgets
+        self.loaddata_merge()  # --> load data merger
+        self.loadata_tbw_merge()  # -->: Loaddata tbw merge
 
     def loaddata_view_header(self):
         try:
@@ -604,41 +625,6 @@ class MainWindow(QMainWindow):
                 str(e),
             )
             self.menu_view_home()
-
-    def loaddata_column_cbb(self):
-        self.view_create_ui.cbbCreateColumn.clear()
-        self.view_create_ui.cbbFilterColumn.clear()
-        self.view_create_ui.cbbSortColumn.clear()
-        nameColumnList = self.viewCurrent.get_name_column_dataset()
-        # add to select column
-        self.loaddata_select_column()
-        # add to cbb create column
-        if len(nameColumnList) > 0:
-            self.view_create_ui.cbbCreateColumn.addItem("")
-        self.view_create_ui.cbbCreateColumn.addItems(nameColumnList)
-        self.view_create_ui.cbbCreateColumn.setCurrentIndex(0)
-        # add to cbb fileter
-        if len(nameColumnList) > 0:
-            self.view_create_ui.cbbFilterColumn.addItem("")
-        self.view_create_ui.cbbFilterColumn.addItems(nameColumnList)
-        self.view_create_ui.cbbFilterColumn.setCurrentIndex(0)
-        # add to cbb sort
-        if len(nameColumnList) > 0:
-            self.view_create_ui.cbbSortColumn.addItem("")
-        self.view_create_ui.cbbSortColumn.addItems(nameColumnList)
-        self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
-        # load more view
-        self.loaddata_more()
-
-    def loaddata_select_column(self):
-        self.view_create_ui.lvSelectColumnAll.clear()
-        self.view_create_ui.lvSelectColumnChoose.clear()
-        self.view_create_ui.lvSelectColumnAll.addItems(
-            self.viewCurrent.get_name_column_not_select()
-        )
-        self.view_create_ui.lvSelectColumnChoose.addItems(
-            self.viewCurrent.get_name_column_selected()
-        )
 
     def enable_select_dataset(self):
         self.view_create_ui.btnViewDataSetRun.setEnabled(
@@ -693,7 +679,24 @@ class MainWindow(QMainWindow):
             self.viewCurrent.get_sql_sentence()
         )
 
+    def loaddata_when_create_column(self):
+        self.loaddata_select()
+        self.loaddata_sort()
+        self.loaddata_newcolumn()
+        self.loaddata_merge()
+        self.loaddata_filter()
+
     ############ SELECT COLUMN ###############
+    def loaddata_select(self):
+        self.view_create_ui.lvSelectColumnAll.clear()
+        self.view_create_ui.lvSelectColumnChoose.clear()
+        self.view_create_ui.lvSelectColumnAll.addItems(
+            self.viewCurrent.get_name_column_not_select()
+        )
+        self.view_create_ui.lvSelectColumnChoose.addItems(
+            self.viewCurrent.get_name_column_selected()
+        )
+
     def itemclick_lv_not_select(self, item):
         self.columnCur = self.viewCurrent.get_column_not_by_name(item.text())
         self.view_create_ui.lvSelectColumnChoose.clearSelection()
@@ -715,14 +718,14 @@ class MainWindow(QMainWindow):
     def click_select_all(self):
         self.viewCurrent.set_select_column_all()
         self.change_when_add_select_remove()
-        self.loaddata_select_column()
+        self.loaddata_select()
         self.update_sql_sentence()
 
     def click_select_one(self):
         try:
             self.viewCurrent.set_select_column_one(self.columnCur)
             self.change_when_add_select_remove()
-            self.loaddata_select_column()
+            self.loaddata_select()
             self.update_sql_sentence()
         except Exception as e:
             self.show_message(
@@ -735,13 +738,13 @@ class MainWindow(QMainWindow):
     def click_remove_all(self):
         self.viewCurrent.set_remove_column_all()
         self.change_when_add_select_remove()
-        self.loaddata_select_column()
+        self.loaddata_select()
         self.update_sql_sentence()
 
     def click_remove_one(self):
         self.viewCurrent.set_remove_column_one(self.columnCur)
         self.change_when_add_select_remove()
-        self.loaddata_select_column()
+        self.loaddata_select()
         self.update_sql_sentence()
 
     def click_select_save(self):
@@ -806,6 +809,14 @@ class MainWindow(QMainWindow):
         self.columnCur = ModuleColumns.Columns()
 
     ##################      SORT    ##################
+    def loaddata_sort(self):
+        self.view_create_ui.cbbSortColumn.clear()
+        nameColumnList = self.viewCurrent.get_name_column_dataset()
+        if len(nameColumnList) > 0:
+            self.view_create_ui.cbbSortColumn.addItem("")
+        self.view_create_ui.cbbSortColumn.addItems(nameColumnList)
+        self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
+
     def loaddata_tbw_sort(self):
         hearderTitle = self.sentence.header_table_sort()
         self.view_create_ui.tbwSort.clear()
@@ -865,10 +876,14 @@ class MainWindow(QMainWindow):
     def click_btn_sort_add(self):
         self.sortCur.set_type(self.view_create_ui.cbSortAsc.isChecked())
         try:
-            self.viewCurrent.add_sort(self.sortCur)
-            self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
-            self.loaddata_tbw_sort()
-            self.update_sql_sentence()
+            isAdd = self.viewCurrent.add_sort(self.sortCur)
+            if isAdd:
+                self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
+                self.loaddata_tbw_sort()
+                self.update_sql_sentence()
+                self.show_status(1, "Add sort successfull !")
+            else:
+                self.show_status(3, "Add sort fail.")
         except Exception as e:
             self.show_message(
                 3, "Error Add Sort", str(e.__class__.__name__), str(e)
@@ -878,10 +893,16 @@ class MainWindow(QMainWindow):
         self.sortCur.set_type(self.view_create_ui.cbSortAsc.isChecked())
         try:
             self.sortCur.set_update(False)
-            self.viewCurrent.update_sort(self.sortCur)
-            self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
-            self.loaddata_tbw_sort()
-            self.update_sql_sentence()
+            isUpdate = self.viewCurrent.update_sort(self.sortCur)
+            if isUpdate:
+                self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
+                self.loaddata_tbw_sort()
+                self.update_sql_sentence()
+                self.show_status(1, "Update Sort successfull.")
+            else:
+                self.show_status(
+                    2, "Update Sort Fail. Do not found Sort Object."
+                )
         except Exception as e:
             self.show_message(
                 3, "Error Update Sort", str(e.__class__.__name__), str(e)
@@ -903,20 +924,27 @@ class MainWindow(QMainWindow):
                 self.show_message(
                     0,
                     "Delete Sort",
-                    "Do you want Delete Sort ?",
+                    "Do you want Delete Sort Object ?",
                 )
                 if self.messageBoxButton == QMessageBox.StandardButton.Ok:
                     colName = self.view_create_ui.tbwSort.item(
                         index.row(), 1
                     ).text()
-                    self.viewCurrent.delete_sort_by_column_name(colName)
-                    self.loaddata_tbw_sort()
-                    self.update_sql_sentence()
-                    if (
-                        colName
-                        == self.view_create_ui.cbbSortColumn.currentText().strip()
-                    ):
-                        self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
+                    isDelete = self.viewCurrent.delete_sort(colName)
+                    if isDelete:
+                        self.loaddata_tbw_sort()
+                        self.update_sql_sentence()
+                        self.loaddata_when_create_column()
+                        if (
+                            colName
+                            == self.view_create_ui.cbbSortColumn.currentText().strip()
+                        ):
+                            self.view_create_ui.cbbSortColumn.setCurrentIndex(0)
+                        self.show_status(1, "Delete Sort Object sucessfull !")
+                    else:
+                        self.show_status(
+                            2, "Delete Sort Object Fail. Do not found"
+                        )
         except Exception as e:
             self.show_message(
                 3, "Delete Sort Error", str(e.__class__.__name__), str(e)
@@ -936,7 +964,15 @@ class MainWindow(QMainWindow):
             not self.sortCur.get_bool_type()
         )
 
-    ####################        NEW COLUMN ###############
+    ####################    NEW COLUMN ###############
+    def loaddata_newcolumn(self):
+        self.view_create_ui.cbbCreateColumn.clear()
+        nameColumnList = self.viewCurrent.get_name_column_new()
+        if len(nameColumnList) > 0:
+            self.view_create_ui.cbbCreateColumn.addItem("")
+        self.view_create_ui.cbbCreateColumn.addItems(nameColumnList)
+        self.view_create_ui.cbbCreateColumn.setCurrentIndex(0)
+
     def loaddata_tbw_columnnew(self):
         hearderTitle = self.sentence.header_table_column_new()
         self.view_create_ui.tbwCreateColumn.clear()
@@ -1066,10 +1102,14 @@ class MainWindow(QMainWindow):
         value2 = self.view_create_ui.leCreateValue2.text()
         try:
             self.functionCur.set_value(value1, value2)
-            self.viewCurrent.add_column_new(self.functionCur)
-            self.view_create_ui.cbbCreateColumn.setCurrentIndex(0)
-            self.loaddata_tbw_columnnew()
-            self.loaddata_column_cbb()
+            isAdd = self.viewCurrent.add_column_new(self.functionCur)
+            if isAdd:
+                self.loaddata_tbw_columnnew()
+                self.loaddata_when_create_column()
+                self.view_create_ui.cbbCreateColumn.setCurrentIndex(0)
+                self.show_status(1, "Create New Column Object successfull.")
+            else:
+                self.show_status(3, "Create New Column Object Fail.")
         except Exception as e:
             self.show_message(
                 3, "Error Add New Column", str(e.__class__.__name__), str(e)
@@ -1080,10 +1120,17 @@ class MainWindow(QMainWindow):
         value2 = self.view_create_ui.leCreateValue2.text()
         try:
             self.functionCur.set_value(value1, value2)
-            self.viewCurrent.update_column_new(self.functionCur)
-            self.view_create_ui.cbbCreateColumn.setCurrentIndex(0)
-            self.loaddata_tbw_columnnew()
-            self.loaddata_column_cbb()
+            self.functionCur.set_update(False)
+            isUpdate = self.viewCurrent.update_column_new(self.functionCur)
+            if isUpdate:
+                self.loaddata_tbw_columnnew()
+                self.loaddata_when_create_column()
+                self.view_create_ui.cbbCreateColumn.setCurrentIndex(0)
+                self.show_status(1, "Update New Column Object successfull.")
+            else:
+                self.show_status(
+                    3, "Update New Column Object fail. Do not found"
+                )
         except Exception as e:
             self.show_message(
                 3, "Error Update New Column", str(e.__class__.__name__), str(e)
@@ -1120,22 +1167,215 @@ class MainWindow(QMainWindow):
                     funShowName = self.view_create_ui.tbwCreateColumn.item(
                         index.row(), 2
                     ).text()
-                    self.viewCurrent.delete_column_new(colName, funShowName)
-                    self.loaddata_tbw_columnnew()
-                    self.loaddata_column_cbb()
-                    if (
-                        colName
-                        == self.view_create_ui.cbbCreateColumn.currentText().strip()
-                        and funShowName
-                        == self.view_create_ui.cbbCreateFunction.currentText().strip()
-                    ):
-                        self.view_create_ui.cbbCreateColumn.setCurrentIndex(0)
+                    isDelete = self.viewCurrent.delete_column_new(
+                        colName, funShowName
+                    )
+                    if isDelete:
+                        self.loaddata_tbw_columnnew()
+                        self.loaddata_column_cbb()
+                        if (
+                            colName
+                            == self.view_create_ui.cbbCreateColumn.currentText().strip()
+                            and funShowName
+                            == self.view_create_ui.cbbCreateFunction.currentText().strip()
+                        ):
+                            self.view_create_ui.cbbCreateColumn.setCurrentIndex(
+                                0
+                            )
+                        self.show_status(
+                            1, "Delete New Column Object successfull."
+                        )
+                    else:
+                        self.show_status(
+                            3, "Delete New Column Object fail. Do not found."
+                        )
         except Exception as e:
             self.show_message(
                 3, "Delete Colum New Error", str(e.__class__.__name__), str(e)
             )
 
+    #############   MERGE COLUMN ###################
+    def loaddata_merge(self):
+        self.view_create_ui.cbbMergeOperation.clear()
+        listMergeName = self.dataBasic.get_merge_name()
+        if len(listMergeName) > 0:
+            self.view_create_ui.cbbMergeOperation.addItem("")
+            self.view_create_ui.cbbMergeOperation.addItems(listMergeName)
+        self.view_create_ui.cbbMergeOperation.setCurrentIndex(0)
+        self.view_create_ui.cbbMergeOperation.setEnabled(len(listMergeName) > 0)
+        self.loadata_tbw_merge()
+
+    def loadata_tbw_merge(self):
+        hearderTitle = self.sentence.header_table_merge()
+        self.view_create_ui.tbwMerge.clear()
+        self.view_create_ui.tbwMerge.setColumnCount(len(hearderTitle))
+        self.view_create_ui.tbwMerge.setRowCount(
+            len(self.viewCurrent.mergeSelected)
+        )
+        # add header
+        for i in range(0, len(hearderTitle)):
+            hItem = QTableWidgetItem(hearderTitle[i])
+            hItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.view_create_ui.tbwMerge.setHorizontalHeaderItem(i, hItem)
+        # add row
+        if len(self.viewCurrent.mergeSelected) > 0:
+            row = 0
+            for rowItem in self.viewCurrent.mergeSelected:
+                rItem0 = QPushButton("   Delete")
+                rItem0.clicked.connect(self.click_btn_merge_delete)
+                rItem0.setMinimumSize(QSize(80, 24))
+                rItem0.setMaximumSize(QSize(80, 24))
+                icon = QIcon()
+                icon.addFile(
+                    ":/images/images/minus.png",
+                    QSize(),
+                    QIcon.Normal,
+                    QIcon.Off,
+                )
+                rItem0.setIcon(icon)
+                rItem1 = QTableWidgetItem(rowItem.column1.columnName)
+                rItem2 = QTableWidgetItem(rowItem.column2.columnName)
+                rItem3 = QTableWidgetItem(rowItem.operShow)
+                self.view_create_ui.tbwMerge.setCellWidget(row, 0, rItem0)
+                self.view_create_ui.tbwMerge.setItem(row, 1, rItem1)
+                self.view_create_ui.tbwMerge.setItem(row, 2, rItem2)
+                self.view_create_ui.tbwMerge.setItem(row, 3, rItem3)
+                self.view_create_ui.tbwMerge.cellWidget(
+                    row, 0
+                ).setContentsMargins(10, 3, 10, 3)
+                row += 1
+            self.view_create_ui.tbwMerge.setColumnWidth(0, 100)
+            self.view_create_ui.tbwMerge.horizontalHeader().setSectionResizeMode(
+                1, QHeaderView.ResizeMode.ResizeToContents
+            )
+            self.view_create_ui.tbwMerge.horizontalHeader().setSectionResizeMode(
+                2, QHeaderView.ResizeMode.ResizeToContents
+            )
+            self.view_create_ui.tbwMerge.horizontalHeader().setSectionResizeMode(
+                3, QHeaderView.ResizeMode.ResizeToContents
+            )
+
+    def change_cbb_merge_operation(self):
+        oper = self.view_create_ui.cbbMergeOperation.currentText()
+        self.mergeCur = ModuleMerge.Merge()
+        if oper.strip() != "":
+            operation = self.dataBasic.get_operation_by_name(oper)
+            self.mergeCur.set_operation(operation)
+        self.loaddata_cbb_column1()
+
+    def loaddata_cbb_column1(self):
+        self.view_create_ui.cbbMergeColumn1.clear()
+        if self.mergeCur.isOper:
+            listColumn = self.viewCurrent.get_column_merge_01(
+                self.mergeCur.valueType
+            )
+        else:
+            listColumn = []
+        if len(listColumn) > 0:
+            self.view_create_ui.cbbMergeColumn1.addItem("")
+            self.view_create_ui.cbbMergeColumn1.addItems(listColumn)
+        self.view_create_ui.cbbMergeColumn1.setCurrentIndex(0)
+        self.view_create_ui.cbbMergeColumn1.setEnabled(len(listColumn) > 0)
+
+    def change_cbb_merge_column1(self):
+        columnName = self.view_create_ui.cbbMergeColumn1.currentText()
+        if columnName.strip() != "":
+            column = self.viewCurrent.get_column_by_name(columnName)
+            self.mergeCur.set_column1(column)
+        else:
+            self.mergeCur.set_column1()
+        self.loaddata_cbb_column2()
+
+    def loaddata_cbb_column2(self):
+        self.view_create_ui.cbbMergeColumn2.clear()
+        if self.mergeCur.isColumn1:
+            listColumn = self.viewCurrent.get_column_merge_02(
+                self.mergeCur.valueType, self.mergeCur.column1
+            )
+        else:
+            listColumn = []
+        if len(listColumn) > 0:
+            self.view_create_ui.cbbMergeColumn2.addItem("")
+            self.view_create_ui.cbbMergeColumn2.addItems(listColumn)
+            self.view_create_ui.cbbMergeColumn2.setCurrentIndex(0)
+        self.view_create_ui.cbbMergeColumn2.setEnabled(
+            len(listColumn) > 0 and self.mergeCur.isOper
+        )
+
+    def change_cbb_merge_column2(self):
+        columnName = self.view_create_ui.cbbMergeColumn2.currentText()
+        if columnName.strip() != "":
+            column = self.viewCurrent.get_column_by_name(columnName)
+            self.mergeCur.set_column2(column)
+        else:
+            self.mergeCur.set_column2()
+        self.view_create_ui.btnMergerAdd.setEnabled(
+            self.mergeCur.get_bool_add()
+        )
+
+    def click_btn_merge_add(self):
+        try:
+            isAdd = self.viewCurrent.add_merge(self.mergeCur)
+            if isAdd:
+                self.view_create_ui.cbbMergeOperation.setCurrentIndex(0)
+                self.loaddata_when_create_column()
+                self.loaddata_merge()
+                self.loadata_tbw_merge()
+                self.show_status(1, "Add Merge Object Successfull.")
+            else:
+                self.show_status(3, "Add Merge Object Fail.")
+        except Exception as e:
+            self.show_message(
+                3, "Add Merge Error", str(e.__class__.__name__), str(e)
+            )
+
+    def click_btn_merge_delete(self):
+        try:
+            btnDelete = self.sender()
+            index = self.view_create_ui.tbwMerge.indexAt(btnDelete.pos())
+            if index.isValid():
+                self.show_message(
+                    0,
+                    "Delete Merge Column",
+                    "Do you want Delete Merge Column ?",
+                )
+                if self.messageBoxButton == QMessageBox.StandardButton.Ok:
+                    colName1 = self.view_create_ui.tbwMerge.item(
+                        index.row(), 1
+                    ).text()
+                    colName2 = self.view_create_ui.tbwMerge.item(
+                        index.row(), 2
+                    ).text()
+                    operation = self.view_create_ui.tbwMerge.item(
+                        index.row(), 3
+                    ).text()
+                    isDelete = self.viewCurrent.delete_merge(
+                        colName1, colName2, operation
+                    )
+                    if isDelete:
+                        self.loaddata_when_create_column()
+                        self.loaddata_merge()
+                        self.loadata_tbw_merge()
+                        self.show_status(1, "Delete Merge Successfull !")
+                    else:
+                        self.show_status(
+                            2,
+                            "Do not delete Merge. Not found Meger in List Merger",
+                        )
+        except Exception as e:
+            self.show_message(
+                3, "Delete Sort Error", str(e.__class__.__name__), str(e)
+            )
+
     ##############  FILTER  ######################
+    def loaddata_filter(self):
+        self.view_create_ui.cbbFilterColumn.clear()
+        nameColumnList = self.viewCurrent.get_name_column_dataset()
+        if len(nameColumnList) > 0:
+            self.view_create_ui.cbbFilterColumn.addItem("")
+        self.view_create_ui.cbbFilterColumn.addItems(nameColumnList)
+        self.view_create_ui.cbbFilterColumn.setCurrentIndex(0)
+
     def loaddata_tbw_filter(self):
         hearderTitle = self.sentence.header_table_filter()
         self.view_create_ui.tbwFilter.clear()
@@ -1318,7 +1558,9 @@ class MainWindow(QMainWindow):
             self.calCur.set_level(level)
             self.calCur.set_relation(relation)
             self.calCur.set_with_cal(withCal)
-            self.viewCurrent.update_calculation(self.calCur)
+            self.calCur.set_update(False)
+            self.viewCurrent.update_calculation(self.calCur, self.calUpdate)
+            self.calUpdate = ModuleCalculations.Calculations()
             self.view_create_ui.cbbFilterColumn.setCurrentIndex(0)
             self.loaddata_tbw_filter()
             self.update_sql_sentence()
@@ -1333,13 +1575,13 @@ class MainWindow(QMainWindow):
         calNameShow = self.view_create_ui.tbwFilter.item(rowIndex, 2).text()
         isAgg = self.view_create_ui.tbwFilter.item(rowIndex, 8).text()
         self.view_create_ui.cbbFilterColumn.setCurrentText(colName)
-        calUpdate = self.viewCurrent.get_calculation_by_key(
+        self.calUpdate = self.viewCurrent.get_calculation_by_key(
             colName, calNameShow, isAgg
         )
         self.view_create_ui.cbbFilterCal.setCurrentText(
-            calUpdate.get_name_show()
+            self.calUpdate.get_name_show()
         )
-        self.calCur = copy.deepcopy(calUpdate)
+        self.calCur = copy.deepcopy(self.calUpdate)
         self.calCur.set_update(True)
         self.enable_filter_cal()
 
@@ -1384,7 +1626,6 @@ class MainWindow(QMainWindow):
         self.view_create_ui.cbbMoreType.addItems(["", "Included", "Excluded"])
         self.view_create_ui.cbbMoreType.setCurrentIndex(0)
         self.view_create_ui.cbbMoreType.setEnabled(True)
-        self.loaddata_tbw_more()
 
     def loaddata_tbw_more(self):
         hearderTitle = self.sentence.header_table_more()
@@ -1456,9 +1697,9 @@ class MainWindow(QMainWindow):
 
     def loaddata_cbb_view(self):
         listView = copy.deepcopy(self.dataBasic.moreView)
-        listView2 = [
+        listView2 = sorted([
             x for x in listView if x not in self.viewCurrent.get_view_in_more()
-        ]
+        ])
         self.view_create_ui.cbbMoreView.clear()
         if len(listView2) > 0:
             self.view_create_ui.cbbMoreView.addItem("")
@@ -1500,9 +1741,14 @@ class MainWindow(QMainWindow):
         columnName = self.view_create_ui.cbbMoreColumn.currentText()
         try:
             self.moreViewCurrent.set_view(viewName, columnName)
-            self.viewCurrent.add_more(self.moreViewCurrent)
-            self.loaddata_more()
-            self.update_sql_sentence()
+            isAdd = self.viewCurrent.add_more(self.moreViewCurrent)
+            if isAdd:
+                self.loaddata_more()
+                self.loaddata_tbw_more()
+                self.update_sql_sentence()
+                self.show_status(1, "Add More Object successfull.")
+            else:
+                self.show_status(3, "Add More Object fail.")
         except Exception as e:
             self.show_message(
                 3,
@@ -1516,10 +1762,15 @@ class MainWindow(QMainWindow):
         columnName = self.view_create_ui.cbbMoreColumn.currentText()
         try:
             self.moreViewCurrent.set_view(viewName, columnName)
-            self.viewCurrent.update_more(self.moreViewCurrent)
-            self.loaddata_more()
-            self.update_sql_sentence()
-            self.show_message(1, "Update More", "Update More Successful !")
+            self.moreViewCurrent.set_update(False)
+            isUpdate = self.viewCurrent.update_more(self.moreViewCurrent)
+            if isUpdate:
+                self.loaddata_more()
+                self.update_sql_sentence()
+                self.loaddata_tbw_more()
+                self.show_status(1, "Update More Successful !")
+            else:
+                self.show_status(3, "Update More Object Fail.")
         except Exception as e:
             self.show_message(
                 3,
@@ -1545,13 +1796,20 @@ class MainWindow(QMainWindow):
                     typeConnect = self.view_create_ui.tbwMore.item(
                         index.row(), 2
                     ).text()
-                    self.viewCurrent.delete_more(viewConnect, typeConnect)
-                    self.moreViewCurrent = ModuleMores.Mores()
-                    self.loaddata_more()
-                    self.update_sql_sentence()
+                    isDelete = self.viewCurrent.delete_more(
+                        viewConnect, typeConnect
+                    )
+                    if isDelete:
+                        self.moreViewCurrent = ModuleMores.Mores()
+                        self.loaddata_more()
+                        self.update_sql_sentence()
+                        self.loaddata_tbw_more()
+                        self.show_status(1, "Delete More Object successfull.")
+                    else:
+                        self.show_status(3, "Delete More Object Fail.")
         except Exception as e:
             self.show_message(
-                3, "Delete Colum New Error", str(e.__class__.__name__), str(e)
+                3, "Delete More Object Error", str(e.__class__.__name__), str(e)
             )
 
     def click_item_more_tbw(self, item):
@@ -1795,12 +2053,13 @@ class MainWindow(QMainWindow):
         self.view_create_ui.btnTabSelectColumn.setEnabled(index != 0)
         self.view_create_ui.btnTabCreateColumn.setEnabled(index != 1)
         self.view_create_ui.btnTabColumnPlus.setEnabled(index != 2)
-        self.view_create_ui.btnTabColumnPlus.setEnabled(False)
+        # self.view_create_ui.btnTabColumnPlus.setEnabled(False)
         self.view_create_ui.btnTabFilter.setEnabled(index != 3)
         self.view_create_ui.btnTabSort.setEnabled(index != 4)
         self.view_create_ui.btnTabMore.setEnabled(index != 5)
         self.view_create_ui.btnTabSql.setEnabled(index != 6)
 
+    ################### RUN ###########################
     def menu_view_run(self):
         self.refresh_var_global()
         self.view_run_ui = Ui_frmRunView()
@@ -1920,6 +2179,7 @@ class MainWindow(QMainWindow):
                 str(e),
             )
 
+    ################### RELEASE #####################
     def menu_view_release(self):
         self.refresh_var_global()
         self.view_release_ui = Ui_frmRelease()
@@ -2225,7 +2485,9 @@ class MainWindow(QMainWindow):
         self.loaddata_user_create()
 
     ###################     CREATE VIEW MANUAL #######################
+    """
     def menu_view_create_manual(self):
+        pass
         self.refresh_var_global()
         self.view_manual_ui = Ui_CreateManual()
         self.view_manual_widgets = QWidget()
@@ -2628,14 +2890,13 @@ class MainWindow(QMainWindow):
                     "Check Name View",
                     "Name of column contain special character (not in ASCII)",
                 )
-                """
             if isCheck and not nameNew.replace("_", "").isalnum():
                 isCheck = False
                 self.show_message(
                     3,
                     "Check Name View",
                     "Name of column contain special character (not in ALPHA)",
-                )"""
+                )
             if isCheck and self.dataBasic.check_view_name(nameNew):
                 isCheck = False
                 self.show_message(
@@ -2644,6 +2905,7 @@ class MainWindow(QMainWindow):
 
             if not isCheck:
                 self.view_manual_ui.leViewName.setText("")
+        """
 
     ##################  ABOUT ####################
     def menu_system_about(self):
@@ -2679,7 +2941,7 @@ class MainWindow(QMainWindow):
             key = self.system_about_ui.leLicense.text()
             if key.strip() != "":
                 try:
-                    self.products.check_key(key)
+                    self.products.check_key(key, self.users.userno)
                     self.products = ModuleProducts.Products(self.connects)
                     self.loaddata_about()
                 except Exception as e:

@@ -60,5 +60,6 @@
         <file>images/hammer.png</file>
         <file>images/add-plus.png</file>
         <file>images/information.png</file>
+        <file>images/merge.png</file>
     </qresource>
 </RCC>

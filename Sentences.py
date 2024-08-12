@@ -134,6 +134,12 @@ class Sentences:
             viewNo
         )
         return sql
+    
+    def sql_load_merge(self, viewNo):
+        sql = "SELECT  * from TVIEW6 where VIEWNO = {0} and STATUS = 1".format(
+            viewNo
+        )
+        return sql
 
     def sql_load_view_release(self, permiss, groups, userno):
         sql = """SELECT t1.viewno, t1.viewname, t1.viewstatus, t1.releasestatus, t1.datasetno, t2.datasetname, t2.datasettable, t1.indb FROM Tviews t1 inner join Tdataset t2 on t1.datasetno = t2.datasetno where t1.viewstatus <> 3 or t1.indb = 2"""
@@ -191,3 +197,17 @@ class Sentences:
             licenseUse, userno
         )
         return sql
+
+    def sql_load_operation(self):
+        sql = "select * from TOperation"
+        return sql
+
+    def header_table_merge(self):
+        listHeader = ["Action", "Column 1", "Column 2", "Operation"]
+        return listHeader
+
+    def get_type_column(self, index):
+        if index == 1:
+            return self.type_number()
+        else:
+            return self.type_date() + self.type_number() + self.type_str()

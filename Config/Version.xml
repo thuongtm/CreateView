@@ -1,7 +1,7 @@
 <Versions>
     <ver> 4.001.01 Build 02.08.2024 Release</ver>
     <info> Update: Add function More view 
-    - Included: Not in view with column select 
-    - Excluded: Union with view
+    - Included: Union with view
+    - Excluded: Not in view with column select 
     </info>
 </Version>

@@ -11,13 +11,20 @@ class Mores:
 
         self.isUpdate = False
 
+    def update(self, more):
+        self.viewNo = more.viewNo
+        self.lines = more.lines
+        self.typeMore = more.typeMore
+        self.viewConnect = more.viewConnect
+        self.columnConnect = more.columnConnect
+
     def set_type(self, typ):
         self.typeMore = typ
 
     def get_int_type(self):
-        if self.typeMore == "Included":
+        if self.typeMore == "Excluded":
             return 1
-        elif self.typeMore == "Excluded":
+        elif self.typeMore == "Included":
             return 2
         else:
             return 0
