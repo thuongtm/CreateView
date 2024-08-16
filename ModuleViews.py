@@ -38,6 +38,9 @@ class Views:
         self.isRelease = False  # status release
         self.isDataRelease = False
         self.isInDB = False  # check release
+        self.isCoupon = False
+        self.couponSID = str()
+        self.couponCode = str()
         self.writeLog = ModuleWriteLogs.WriteLogs(
             self.connects
         )  # writelog transaction
@@ -60,6 +63,7 @@ class Views:
             self.includedView = view.includedview
             self.set_release(view.releasestatus)
             self.set_indb(view.indb)
+            self.save_coupon(view.coucode, view.cousid)
         except:
             raise
 
@@ -150,6 +154,9 @@ class Views:
             nameList.append(item.columnName)
         return nameList
 
+    def get_str_status_coupon(self):
+        return str(self.isCoupon)
+
     # get sql sentence of view -> plainText
     def get_sql_sentence(self):
         sql = ""
@@ -167,6 +174,30 @@ class Views:
             sql = "{0} ORDER BY {1}".format(sql, self.sql_sort())
         if len(self.sql_more()) > 0:
             sql = "{0} {1}".format(sql, self.sql_more())
+        if self.rowSelects > 0:
+            if self.isCoupon:
+                sql = """SELECT {0}, t12.COUPON_CODE FROM (SELECT t1.*, ROW_NUMBER() OVER (ORDER BY sysdate) AS ROW_KEY FROM ({1}) t1 WHERE ROWNUM <= {2}) t11 LEFT JOIN (SELECT cp.COUPON_CODE, ROW_NUMBER() OVER (ORDER BY cp.CREATED_DATETIME) AS ROW_KEY FROM RPS.COUPON_SET_COUPON cp WHERE cp.COUPON_SET_SID = {3} and coupon_code not like '%{4}%') t12 on t11.ROW_KEY = t12.ROW_KEY
+                        """.format(
+                    self.sql_select_coupon(),
+                    sql,
+                    self.rowSelects,
+                    self.couponSID,
+                    self.couponCode,
+                )
+            else:
+                sql = "SELECT t1.* FROM ({0}) t1 WHERE ROWNUM <= {1}".format(
+                    sql, self.rowSelects
+                )
+        else:
+            if self.isCoupon:
+                sql = """SELECT {0}, t12.COUPON_CODE FROM (SELECT t1.*, ROW_NUMBER() OVER (ORDER BY sysdate) AS ROW_KEY FROM ({1}) t1) t11 LEFT JOIN (SELECT cp.COUPON_CODE, ROW_NUMBER() OVER (ORDER BY cp.CREATED_DATETIME) AS ROW_KEY FROM RPS.COUPON_SET_COUPON cp WHERE cp.COUPON_SET_SID = {2} and coupon_code not like '%{3}%') t12 on t11.ROW_KEY = t12.ROW_KEY
+                        """.format(
+                    self.sql_select_coupon(),
+                    sql,
+                    self.couponSID,
+                    self.couponCode,
+                )
+
         return sql
 
     def get_name_column_not_select(self):
@@ -522,6 +553,13 @@ class Views:
             sql = "DISTINCT " + sql
         return sql
 
+    def sql_select_coupon(self):
+        listColumn = []
+        for item in self.columnSelected:
+            listColumn.append("t11." + item.sql_name_as())
+        sql = ", ".join(listColumn)
+        return sql
+
     def sql_sort(self):
         listSort = []
         for item in self.sortSelect:
@@ -628,15 +666,6 @@ class Views:
                     whereSentence = "{0} {1} {2}".format(
                         whereSentence, listItem[index3][1], listItem[index3][3]
                     )
-        if self.rowSelects > 0:
-            if len(whereSentence) > 0:
-                whereSentence = "{0} and {1}".format(
-                    whereSentence, "ROWNUM <= {0}".format(self.rowSelects)
-                )
-            else:
-                whereSentence = "{0}".format(
-                    "ROWNUM <= {0}".format(self.rowSelects)
-                )
         for item in self.moreSelected:
             if item.get_int_type() == 1:
                 if len(whereSentence) > 0:
@@ -795,6 +824,9 @@ class Views:
             self.includedType,
             self.includedView,
             self.dataset.datasetNo,
+            self.get_str_status_coupon(),
+            self.couponCode,
+            self.couponSID,
         ]
         return listHeader
 
@@ -808,6 +840,9 @@ class Views:
             self.includedType,
             self.includedView,
             self.dataset.datasetNo,
+            self.get_str_status_coupon(),
+            self.couponCode,
+            self.couponSID,
         ]
         return listHeader
 
@@ -837,7 +872,6 @@ class Views:
                 self.set_dataset(dataset)
                 self.loaddata_merge(dataBasic.mergeList)
                 self.loaddata_columnnew(dataBasic)
-                print("Loaddata column")
                 self.update_merge_use()
                 self.loaddata_filter(dataBasic)
                 self.loaddata_select_column()
@@ -920,7 +954,7 @@ class Views:
                 sort.set_view_no(item.viewno)
                 sort.set_line(item.lines)
                 sort.set_column(self.get_column_by_name(item.columnname))
-                sort.set_type(item.types)
+                sort.set_type_str(item.types)
                 self.add_sort(sort)
         except:
             raise
@@ -1246,3 +1280,13 @@ class Views:
                             isDelete = True
                         break
         return isDelete
+
+    def save_coupon(self, cCode, CID):
+        self.couponCode = cCode
+        self.couponSID = CID
+        self.isCoupon = True
+
+    def delete_coupon(self):
+        self.couponCode = str()
+        self.couponSID = str()
+        self.isCoupon = False

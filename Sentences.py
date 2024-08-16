@@ -134,7 +134,7 @@ class Sentences:
             viewNo
         )
         return sql
-    
+
     def sql_load_merge(self, viewNo):
         sql = "SELECT  * from TVIEW6 where VIEWNO = {0} and STATUS = 1".format(
             viewNo
@@ -193,7 +193,7 @@ class Sentences:
         return sql
 
     def sql_check_license_login(self, licenseUse, userno):
-        sql = "select * from TlicenseUser where LICENSE = '{0}' or USER1 = {1}".format(
+        sql = "select * from TlicenseUser where LICENSE = '{0}' and USER1 = {1}".format(
             licenseUse, userno
         )
         return sql

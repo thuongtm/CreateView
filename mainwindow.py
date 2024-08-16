@@ -426,6 +426,9 @@ class MainWindow(QMainWindow):
         self.view_create_ui.cbbViewDataSet.currentIndexChanged.connect(
             self.change_cbb_dataset
         )
+        self.view_create_ui.btnTabAddCoupon.clicked.connect(
+            self.click_btn_tab_coupon
+        )
         # event select column
         self.view_create_ui.lvSelectColumnAll.itemClicked.connect(
             self.itemclick_lv_not_select
@@ -533,6 +536,17 @@ class MainWindow(QMainWindow):
             self.click_item_more_tbw
         )
 
+        # event coupon
+        self.view_create_ui.cbCoupon.checkStateChanged.connect(
+            self.change_state_check_coupon
+        )
+        self.view_create_ui.btnCouponSave.clicked.connect(
+            self.click_btn_coupon_save
+        )
+        self.view_create_ui.btnCouponDelete.clicked.connect(
+            self.click_btn_coupon_delete
+        )
+
         # header
         self.view_create_ui.cbViewDuplicate.checkStateChanged.connect(
             self.change_cb_distinct
@@ -601,6 +615,7 @@ class MainWindow(QMainWindow):
         self.update_sql_sentence()  # --> update sql
         self.loaddata_merge()  # --> load data merger
         self.loadata_tbw_merge()  # -->: Loaddata tbw merge
+        self.loaddata_coupon()  # --: load coupon
 
     def loaddata_view_header(self):
         try:
@@ -1697,9 +1712,13 @@ class MainWindow(QMainWindow):
 
     def loaddata_cbb_view(self):
         listView = copy.deepcopy(self.dataBasic.moreView)
-        listView2 = sorted([
-            x for x in listView if x not in self.viewCurrent.get_view_in_more()
-        ])
+        listView2 = sorted(
+            [
+                x
+                for x in listView
+                if x not in self.viewCurrent.get_view_in_more()
+            ]
+        )
         self.view_create_ui.cbbMoreView.clear()
         if len(listView2) > 0:
             self.view_create_ui.cbbMoreView.addItem("")
@@ -1834,6 +1853,72 @@ class MainWindow(QMainWindow):
             self.show_message(
                 3,
                 "Load Item More Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    ################### COUPON ####################
+    def loaddata_coupon(self):
+        self.view_create_ui.cbCoupon.setChecked(False)
+        self.view_create_ui.leCouponCodeIn.setText(self.viewCurrent.couponCode)
+        self.view_create_ui.leCouponSidIn.setText(self.viewCurrent.couponSID)
+        self.view_create_ui.leCouponCodeIn.setEnabled(False)
+        self.view_create_ui.leCouponSidIn.setEnabled(False)
+        self.view_create_ui.btnCouponDelete.setEnabled(
+            self.viewCurrent.isCoupon
+        )
+
+    def change_state_check_coupon(self):
+        status = self.view_create_ui.cbCoupon.isChecked()
+        self.view_create_ui.leCouponCode.setEnabled(status)
+        self.view_create_ui.leCouponSid.setEnabled(status)
+        self.view_create_ui.btnCouponSave.setEnabled(status)
+        self.view_create_ui.leCouponCode.setText("")
+        self.view_create_ui.leCouponSid.setText("")
+
+    def click_btn_coupon_save(self):
+        couponCode = self.view_create_ui.leCouponCode.text()
+        couponID = self.view_create_ui.leCouponSid.text()
+        isCheck = True
+        try:
+            if isCheck and couponCode.strip() == "":
+                isCheck = False
+                self.show_message(
+                    2, "Input Data", "Please enter data in the box CouponCode."
+                )
+            if isCheck and couponID.strip() == "":
+                isCheck = False
+                self.show_message(
+                    2, "Input Data", "Please enter data in the box Coupon SID."
+                )
+
+            if isCheck:
+                self.viewCurrent.save_coupon(couponCode, couponID)
+                self.loaddata_coupon()
+                self.update_sql_sentence()
+                self.show_status(1, "Save Coupon successfull.")
+        except Exception as e:
+            self.show_message(
+                3,
+                "Save Coupon Error",
+                str(e.__class__.__name__),
+                str(e),
+            )
+
+    def click_btn_coupon_delete(self):
+        self.show_message(0, "Delete Coupon", "Do you want delete Coupon ?")
+        try:
+            if self.messageBoxButton == QMessageBox.StandardButton.Ok:
+                self.viewCurrent.delete_coupon()
+                self.loaddata_coupon()
+                self.update_sql_sentence()
+                self.show_status(
+                    1, "Delete Coupon successfull."
+                )
+        except Exception as e:
+            self.show_message(
+                3,
+                "Delete Coupon Error",
                 str(e.__class__.__name__),
                 str(e),
             )
@@ -2045,9 +2130,13 @@ class MainWindow(QMainWindow):
         self.view_create_ui.stackedWidget.setCurrentIndex(5)
         self.change_tab_view_create(5)
 
-    def click_btn_tab_sql(self):
+    def click_btn_tab_coupon(self):
         self.view_create_ui.stackedWidget.setCurrentIndex(6)
         self.change_tab_view_create(6)
+
+    def click_btn_tab_sql(self):
+        self.view_create_ui.stackedWidget.setCurrentIndex(7)
+        self.change_tab_view_create(7)
 
     def change_tab_view_create(self, index):
         self.view_create_ui.btnTabSelectColumn.setEnabled(index != 0)
@@ -2057,7 +2146,8 @@ class MainWindow(QMainWindow):
         self.view_create_ui.btnTabFilter.setEnabled(index != 3)
         self.view_create_ui.btnTabSort.setEnabled(index != 4)
         self.view_create_ui.btnTabMore.setEnabled(index != 5)
-        self.view_create_ui.btnTabSql.setEnabled(index != 6)
+        self.view_create_ui.btnTabAddCoupon.setEnabled(index != 6)
+        self.view_create_ui.btnTabSql.setEnabled(index != 7)
 
     ################### RUN ###########################
     def menu_view_run(self):

@@ -61,5 +61,6 @@
         <file>images/add-plus.png</file>
         <file>images/information.png</file>
         <file>images/merge.png</file>
+        <file>images/coupon.png</file>
     </qresource>
 </RCC>

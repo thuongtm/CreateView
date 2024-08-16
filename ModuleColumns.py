@@ -73,8 +73,14 @@ class Columns:
                 " "
                 + self.columnName
                 + " as "
-                + '"{0}"'.format(self.columnNameNew)
+                + "{0}".format(self.columnNameNew)
             )
+
+    def sql_name_as(self):
+        if self.columnNameNew == "":
+            return self.columnName
+        else:
+            return self.columnNameNew
 
     def sql_insert(self):
         listInsert = [

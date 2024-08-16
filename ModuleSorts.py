@@ -29,6 +29,9 @@ class Sorts:
         else:
             self.types = "DESC"
 
+    def set_type_str(self, typ):
+        self.types = typ
+
     def get_bool_type(self):
         return self.types == "ASC"
 

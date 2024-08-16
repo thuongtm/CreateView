@@ -1,7 +1,9 @@
 <Versions>
-    <ver> 4.001.01 Build 02.08.2024 Release</ver>
+    <ver> 5.001.01 Build 12.08.2024 Release</ver>
     <info> Update: Add function More view 
     - Included: Union with view
     - Excluded: Not in view with column select 
+    Update: Add function Merge column
+    - Merge column by operator: add, subtract, multiple, divided
     </info>
 </Version>
